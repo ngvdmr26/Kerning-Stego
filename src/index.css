@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  background-color: #080B0D;
+  color: #F5F7F5;
+  font-family: 'Inter', 'Manrope', system-ui, -apple-system, sans-serif;
+}
+
+/* Custom sleek scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #080B0D;
+}
+::-webkit-scrollbar-thumb {
+  background: #1C232B;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2D3748;
+}
+
+/* Glassmorphism helpers */
+.glass-panel {
+  background: rgba(23, 28, 34, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel-glow {
+  background: rgba(23, 28, 34, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(139, 245, 141, 0.2);
+  box-shadow: 0 0 35px rgba(139, 245, 141, 0.08);
+}
+
+.glass-card {
+  background: #171C22;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card:hover {
+  border-color: rgba(139, 245, 141, 0.25);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 245, 141, 0.06);
+}
+
+/* Button glow */
+.btn-accent {
+  background: #8BF58D;
+  color: #080B0D;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 20px rgba(139, 245, 141, 0.35);
+}
+.btn-accent:hover {
+  background: #A4FBA6;
+  box-shadow: 0 0 30px rgba(139, 245, 141, 0.55);
+  transform: translateY(-1px);
+}
+.btn-accent:active {
+  transform: translateY(0);
+}
+
+/* Subtle grid line overlay */
+.bg-grid-cyber {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+}
+
+/* Kerning demonstration simulation styles */
+.kerning-span-0 {
+  letter-spacing: -0.015em;
+  display: inline-block;
+}
+.kerning-span-1 {
+  letter-spacing: 0.12em;
+  display: inline-block;
+  color: #B4FFB4;
+}
