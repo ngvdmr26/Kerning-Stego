@@ -28,6 +28,14 @@ body {
   background: #2D3748;
 }
 
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Glassmorphism helpers */
 .glass-panel {
   background: rgba(23, 28, 34, 0.7);

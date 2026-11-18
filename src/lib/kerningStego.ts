@@ -48,7 +48,8 @@ export function stringToBits(str: string): { bits: string; bytes: Uint8Array; ch
 }
 
 /**
- * Embeds secret message into cover text using Kerning Steganography
+ * Embeds secret message into cover text using adaptive Kerning Steganography.
+ * Works seamlessly with ANY cover text length by distributing zero-width bits evenly!
  */
 export function encodeKerning(coverText: string, secretText: string): StegoResult {
   const cleanCover = coverText.trim();
@@ -66,7 +67,7 @@ export function encodeKerning(coverText: string, secretText: string): StegoResul
       bitsUsed: 0,
       maxCapacityBits: 0,
       checksum: 0,
-      error: 'Введите исходный текст-обёртку.',
+      error: 'Введите исходный текст, в котором будет спрятано сообщение.',
     };
   }
 
@@ -86,50 +87,50 @@ export function encodeKerning(coverText: string, secretText: string): StegoResul
     };
   }
 
-  const { bits: fullBits, bytes, checksum } = stringToBits(cleanSecret);
+  const { bits: fullBits, checksum } = stringToBits(cleanSecret);
   const totalBitsNeeded = fullBits.length;
   const coverChars = Array.from(cleanCover);
-  const maxCapacityBits = coverChars.length;
+  const numChars = coverChars.length;
 
-  if (totalBitsNeeded > maxCapacityBits) {
-    const bytesNeeded = bytes.length;
-    const minCoverChars = totalBitsNeeded;
-    return {
-      success: false,
-      encodedText: '',
-      htmlOutput: '',
-      binaryBits: fullBits,
-      charCount: 0,
-      secretLength: cleanSecret.length,
-      coverLength: coverChars.length,
-      bitsUsed: 0,
-      maxCapacityBits,
-      checksum,
-      error: `Исходный текст слишком короткий. Для сообщения (${bytesNeeded} байт + заголовок = ${totalBitsNeeded} бит) требуется не менее ${minCoverChars} символов в исходном тексте. Сейчас в тексте: ${coverChars.length}.`,
-    };
-  }
-
-  // Interleave bits into cover text
+  // Interleave bits adaptively across cover characters
   let encodedText = HEADER_MARKER;
   let htmlSpans = '';
 
-  for (let i = 0; i < coverChars.length; i++) {
+  const baseBitsPerChar = Math.floor(totalBitsNeeded / numChars);
+  const remainderBits = totalBitsNeeded % numChars;
+
+  let bitIndex = 0;
+  for (let i = 0; i < numChars; i++) {
     const char = coverChars[i];
     encodedText += char;
 
-    if (i < totalBitsNeeded) {
-      const bit = fullBits[i];
+    // Distribute remainder bits across the first few characters
+    const bitsForThisChar = baseBitsPerChar + (i < remainderBits ? 1 : 0);
+    let charBitsStr = '';
+
+    for (let b = 0; b < bitsForThisChar && bitIndex < totalBitsNeeded; b++) {
+      const bit = fullBits[bitIndex++];
+      charBitsStr += bit;
       if (bit === '1') {
         encodedText += CHAR_BIT_1; // Wide kerning indicator
-        htmlSpans += `<span class="k-bit-1" data-k="1" style="letter-spacing: 0.12em;">${escapeHtml(char)}</span>`;
       } else {
         encodedText += CHAR_BIT_0; // Narrow kerning indicator
-        htmlSpans += `<span class="k-bit-0" data-k="0" style="letter-spacing: -0.015em;">${escapeHtml(char)}</span>`;
       }
+    }
+
+    // HTML span markup
+    if (charBitsStr.length > 0) {
+      const hasBit1 = charBitsStr.includes('1');
+      htmlSpans += `<span class="${hasBit1 ? 'k-bit-1' : 'k-bit-0'}" data-k="${charBitsStr}" style="letter-spacing: ${hasBit1 ? '0.12em' : '-0.015em'};">${escapeHtml(char)}</span>`;
     } else {
-      // Remaining chars without hidden bits
       htmlSpans += `<span>${escapeHtml(char)}</span>`;
     }
+  }
+
+  // Any leftover bits safely attached before closing marker
+  while (bitIndex < totalBitsNeeded) {
+    const bit = fullBits[bitIndex++];
+    encodedText += bit === '1' ? CHAR_BIT_1 : CHAR_BIT_0;
   }
 
   encodedText += FOOTER_MARKER;
@@ -146,7 +147,7 @@ export function encodeKerning(coverText: string, secretText: string): StegoResul
     secretLength: cleanSecret.length,
     coverLength: coverChars.length,
     bitsUsed: totalBitsNeeded,
-    maxCapacityBits,
+    maxCapacityBits: numChars * 8,
     checksum,
   };
 }
@@ -168,8 +169,8 @@ export function decodeKerning(input: string): DecodeResult {
     };
   }
 
-  // Method A: Check for HTML Kerning spans with data-k attributes or kerning classes
-  if (raw.includes('data-k="') || raw.includes('k-bit-')) {
+  // Method A: Check for HTML Kerning spans with data-k attributes
+  if (raw.includes('data-k="') || raw.includes("data-k='") || raw.includes('k-bit-')) {
     const htmlBits = extractBitsFromHtml(raw);
     if (htmlBits.length >= 48) {
       const decoded = decodeBits(htmlBits, 'html-kerning', raw.length);
@@ -179,10 +180,6 @@ export function decodeKerning(input: string): DecodeResult {
 
   // Method B: Check for Unicode zero-width kerning markers
   const unicodeBits: string[] = [];
-  let foundStart = false;
-  let foundEnd = false;
-
-  // Check if markers exist
   const hasSentinels = raw.includes(HEADER_MARKER);
 
   if (hasSentinels) {
@@ -194,8 +191,6 @@ export function decodeKerning(input: string): DecodeResult {
       if (ch === CHAR_BIT_1) unicodeBits.push('1');
       else if (ch === CHAR_BIT_0) unicodeBits.push('0');
     }
-    foundStart = true;
-    foundEnd = endIndex !== -1;
   } else {
     // Fallback: search for any sequence of bit chars
     for (const ch of raw) {
@@ -220,7 +215,7 @@ export function decodeKerning(input: string): DecodeResult {
     };
   }
 
-  return decodeBits(unicodeBits.join(''), 'unicode-kerning', raw.length, foundStart && foundEnd);
+  return decodeBits(unicodeBits.join(''), 'unicode-kerning', raw.length);
 }
 
 /**
@@ -229,8 +224,7 @@ export function decodeKerning(input: string): DecodeResult {
 function decodeBits(
   bits: string,
   method: 'unicode-kerning' | 'html-kerning',
-  rawLength: number,
-  _hasBoundaryMarkers: boolean = true
+  rawLength: number
 ): DecodeResult {
   if (bits.length < 48) {
     return {
@@ -240,7 +234,7 @@ function decodeBits(
       extractedBitsCount: bits.length,
       checksumValid: false,
       detectionMethod: method,
-      error: 'Недостаточно служебных данных (заголовок повреждён).',
+      error: 'Недостаточно данных для извлечения (заголовок повреждён).',
     };
   }
 
@@ -261,7 +255,7 @@ function decodeBits(
       extractedBitsCount: bits.length,
       checksumValid: false,
       detectionMethod: method,
-      error: 'Сигнатура Kerning Stego не совпадает. Возможно, текст повреждён или закодирован другой версией.',
+      error: 'Сигнатура Kerning Stego не распознана. Текст не содержит валидного контейнера.',
       diagnostics: {
         coverCharacters: rawLength,
         markersFound: bits.length,
@@ -280,7 +274,7 @@ function decodeBits(
       extractedBitsCount: bits.length,
       checksumValid: false,
       detectionMethod: method,
-      error: `Сообщение неполное: ожидалось ${byteLength} байт (${payloadBitsNeeded} бит), но найдено только ${payloadBits.length} бит.`,
+      error: `Сообщение повреждено: ожидалось ${byteLength} байт, но найдено только ${Math.floor(payloadBits.length / 8)} байт.`,
     };
   }
 
@@ -322,16 +316,16 @@ function decodeBits(
       extractedBitsCount: bits.length,
       checksumValid: false,
       detectionMethod: method,
-      error: 'Ошибка декодирования UTF-8. Символы были повреждены при передаче.',
+      error: 'Ошибка декодирования символов UTF-8. Данные были искажены при пересылке.',
     };
   }
 }
 
 /**
- * Extracts binary bits from HTML markup containing data-k="0" or data-k="1"
+ * Extracts binary bits from HTML markup containing data-k attributes
  */
 function extractBitsFromHtml(html: string): string {
-  const regex = /data-k=["']([01])["']/g;
+  const regex = /data-k=["']([01]+)["']/g;
   let match;
   let bits = '';
   while ((match = regex.exec(html)) !== null) {
@@ -358,20 +352,21 @@ function escapeHtml(str: string): string {
 function generateStandaloneHtml(
   spansContent: string,
   coverLen: number,
-  _secretLen: number,
+  secretLen: number,
   bitsCount: number
 ): string {
   return `<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kerning Stego Document</title>
   <style>
     body {
       background: #080B0D;
       color: #F5F7F5;
       font-family: 'Inter', system-ui, sans-serif;
-      padding: 40px 24px;
+      padding: 40px 20px;
       line-height: 1.8;
       max-width: 800px;
       margin: 0 auto;
@@ -380,7 +375,7 @@ function generateStandaloneHtml(
       background: #171C22;
       border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 16px;
-      padding: 28px;
+      padding: 24px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
     .header {
@@ -394,6 +389,7 @@ function generateStandaloneHtml(
     .content {
       font-size: 1.15rem;
       letter-spacing: normal;
+      word-break: break-word;
     }
     .k-bit-0 { letter-spacing: -0.015em; }
     .k-bit-1 { letter-spacing: 0.12em; }
@@ -416,7 +412,7 @@ function generateStandaloneHtml(
       ${spansContent}
     </div>
     <div class="badge">
-      Защищено методом Кёрнинга · Бит внедрено: ${bitsCount} · Длина текста: ${coverLen}
+      Защищено методом Кёрнинга · Бит внедрено: ${bitsCount} · Длина текста: ${coverLen} символов · Секрет: ${secretLen} символов
     </div>
   </div>
 </body>
@@ -433,17 +429,27 @@ export function analyzeKerningSpans(encodedText: string): TextSpanAnalysis[] {
   for (let i = 0; i < chars.length; i++) {
     const ch = chars[i];
     // Skip sentinels
-    if (ch === '\uFEFF' || ch === '\u200D') continue;
+    if (ch === '\uFEFF' || ch === '\u200D' || ch === CHAR_BIT_0 || ch === CHAR_BIT_1) {
+      continue;
+    }
 
-    // Check next char for bit
-    const nextChar = chars[i + 1];
-    if (nextChar === CHAR_BIT_1) {
-      result.push({ char: ch, bit: 1, spacing: '+0.12em (Wide)' });
-      i++; // skip bit char
-    } else if (nextChar === CHAR_BIT_0) {
-      result.push({ char: ch, bit: 0, spacing: '-0.015em (Narrow)' });
-      i++; // skip bit char
-    } else if (ch !== CHAR_BIT_1 && ch !== CHAR_BIT_0) {
+    // Look ahead to collect any attached bits
+    let attachedBits = '';
+    let j = i + 1;
+    while (j < chars.length && (chars[j] === CHAR_BIT_0 || chars[j] === CHAR_BIT_1)) {
+      attachedBits += chars[j] === CHAR_BIT_1 ? '1' : '0';
+      j++;
+    }
+
+    if (attachedBits.length > 0) {
+      const bitNum = attachedBits.includes('1') ? 1 : 0;
+      result.push({
+        char: ch,
+        bit: bitNum as (0 | 1),
+        spacing: attachedBits.length > 1 ? `Бит: ${attachedBits}` : (bitNum === 1 ? '+0.12em (1)' : '-0.015em (0)')
+      });
+      i = j - 1;
+    } else {
       result.push({ char: ch, bit: null, spacing: 'normal' });
     }
   }

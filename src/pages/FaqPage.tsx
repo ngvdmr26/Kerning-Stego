@@ -3,7 +3,7 @@ import { Plus, Minus, HelpCircle, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const FaqPage: React.FC = () => {
-  const [openIndex, setOpenIndex] = useState<number | null>(0); // First item open by default
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   const faqs = [
     {
@@ -37,43 +37,44 @@ export const FaqPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-80px)] py-8 lg:py-14">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-[calc(100vh-80px)] py-6 sm:py-10 lg:py-14">
+      <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8">
         
         {/* Main Grid: Left Accordion + Right 3D Visual */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           
           {/* Left Column: Title + FAQ Accordion */}
-          <div className="lg:col-span-8">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#F5F7F5] tracking-tight mb-3">
+          <div className="lg:col-span-8 text-left">
+            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-[#F5F7F5] tracking-tight mb-2 sm:mb-3">
               Часто задаваемые <br className="hidden sm:inline" />
               вопросы
             </h1>
-            <p className="text-[#92999F] text-sm sm:text-base max-w-xl mb-10">
+            <p className="text-[#92999F] text-xs sm:text-base max-w-xl mb-6 sm:mb-10 leading-relaxed">
               Ответы на популярные вопросы о методе Кёрнинга и нашем инструменте.
             </p>
 
             {/* Accordion list matching Reference */}
-            <div className="space-y-3">
+            <div className="space-y-2.5 sm:space-y-3">
               {faqs.map((faq, index) => {
                 const isOpen = openIndex === index;
                 return (
                   <div
                     key={index}
-                    className="glass-card rounded-2xl overflow-hidden transition-all duration-200 border border-white/[0.08]"
+                    className="glass-card rounded-xl sm:rounded-2xl overflow-hidden transition-all duration-200 border border-white/[0.08]"
                   >
                     <button
+                      type="button"
                       onClick={() => toggleFaq(index)}
-                      className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 transition-colors hover:bg-white/[0.03]"
+                      className="w-full p-4 sm:p-6 text-left flex items-center justify-between gap-3 sm:gap-4 transition-colors hover:bg-white/[0.03] cursor-pointer"
                     >
-                      <span className="text-sm sm:text-base font-semibold text-[#F5F7F5]">
+                      <span className="text-xs sm:text-base font-semibold text-[#F5F7F5] leading-snug">
                         {faq.q}
                       </span>
-                      <div className="w-8 h-8 rounded-full bg-[#12161B] border border-white/10 flex items-center justify-center flex-shrink-0 text-[#92999F] transition-all">
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#12161B] border border-white/10 flex items-center justify-center flex-shrink-0 text-[#92999F] transition-all">
                         {isOpen ? (
-                          <Minus className="w-4 h-4 text-[#8BF58D]" />
+                          <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#8BF58D]" />
                         ) : (
-                          <Plus className="w-4 h-4 text-[#92999F]" />
+                          <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#92999F]" />
                         )}
                       </div>
                     </button>
@@ -84,9 +85,9 @@ export const FaqPage: React.FC = () => {
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
                           exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.25 }}
+                          transition={{ duration: 0.2 }}
                         >
-                          <div className="px-5 pb-6 sm:px-6 sm:pb-6 text-xs sm:text-sm text-[#92999F] leading-relaxed border-t border-white/[0.04] pt-4">
+                          <div className="px-4 pb-4 sm:px-6 sm:pb-6 text-xs sm:text-sm text-[#92999F] leading-relaxed border-t border-white/[0.04] pt-3 sm:pt-4">
                             {faq.a}
                           </div>
                         </motion.div>
@@ -98,38 +99,37 @@ export const FaqPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Column: 3D Speech Bubble with Question Mark matching Reference */}
-          <div className="lg:col-span-4 relative flex items-center justify-center pt-8 lg:pt-16">
-            <div className="absolute w-64 h-64 rounded-full bg-[#8BF58D]/15 blur-[90px] pointer-events-none" />
+          {/* Right Column: 3D Speech Bubble with Question Mark */}
+          <div className="lg:col-span-4 relative flex items-center justify-center pt-4 sm:pt-8 lg:pt-16 w-full">
+            <div className="absolute w-52 h-52 sm:w-64 sm:h-64 rounded-full bg-[#8BF58D]/15 blur-[80px] pointer-events-none" />
 
             <motion.div 
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7 }}
-              className="relative w-full max-w-[320px] group"
+              transition={{ duration: 0.6 }}
+              className="relative w-full max-w-[260px] sm:max-w-[320px] group"
             >
-              <div className="relative rounded-3xl overflow-hidden border border-white/[0.14] bg-[#12161B]/80 shadow-2xl backdrop-blur-2xl">
+              <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-white/[0.14] bg-[#12161B]/80 shadow-2xl backdrop-blur-2xl">
                 <img 
                   src="/assets/faq-bubble.jpg" 
                   alt="3D Speech Bubble with question mark" 
                   className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
                   onError={(e) => {
-                    // Fallback
                     (e.target as HTMLElement).style.display = 'none';
                   }}
                 />
 
                 {/* Question mark badge */}
-                <div className="absolute top-4 right-4 w-12 h-12 rounded-2xl bg-[#080B0D]/80 backdrop-blur-md border border-white/10 flex items-center justify-center">
-                  <HelpCircle className="w-6 h-6 text-[#8BF58D] drop-shadow-[0_0_8px_rgba(139,245,141,0.5)]" />
+                <div className="absolute top-3 right-3 sm:top-4 sm:right-4 w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#080B0D]/80 backdrop-blur-md border border-white/10 flex items-center justify-center">
+                  <HelpCircle className="w-4 h-4 sm:w-6 sm:h-6 text-[#8BF58D] drop-shadow-[0_0_8px_rgba(139,245,141,0.5)]" />
                 </div>
 
-                <div className="p-5 bg-gradient-to-t from-[#080B0D] via-[#101418]/90 to-transparent">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-[#8BF58D] mb-1">
+                <div className="p-4 sm:p-5 bg-gradient-to-t from-[#080B0D] via-[#101418]/90 to-transparent">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-[#8BF58D] mb-1">
                     <ShieldCheck className="w-3.5 h-3.5" />
                     <span>Центр помощи</span>
                   </div>
-                  <p className="text-xs text-[#92999F]">
+                  <p className="text-[11px] sm:text-xs text-[#92999F]">
                     Остались вопросы? Ознакомьтесь с подробной документацией по протоколу.
                   </p>
                 </div>

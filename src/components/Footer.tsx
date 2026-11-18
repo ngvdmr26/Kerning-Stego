@@ -7,7 +7,7 @@ interface FooterProps {
 
 export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
   return (
-    <footer className="w-full border-t border-white/[0.08] bg-[#080B0D] py-12 px-4 sm:px-6 lg:px-8 mt-auto">
+    <footer className="w-full border-t border-white/[0.08] bg-[#080B0D] py-8 sm:py-12 px-4 sm:px-6 lg:px-8 mt-auto">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
         
         {/* Brand */}
