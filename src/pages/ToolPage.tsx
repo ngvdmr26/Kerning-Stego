@@ -19,7 +19,11 @@ import confetti from 'canvas-confetti';
 import { encodeKerning, decodeKerning, analyzeKerningSpans } from '../lib/kerningStego';
 import { StegoResult, DecodeResult, TextSpanAnalysis } from '../lib/stegoTypes';
 
-export const ToolPage: React.FC = () => {
+interface ToolPageProps {
+  isDarkTheme?: boolean;
+}
+
+export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
   const [mode, setMode] = useState<'encode' | 'decode'>('encode');
 
   // Encode state
@@ -157,11 +161,11 @@ export const ToolPage: React.FC = () => {
         {/* Top Header & 3D Floating Lock Tile */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 mb-6 sm:mb-10">
           <div>
-            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-[#F5F7F5] tracking-tight mb-2 sm:mb-3">
+            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-[#F5F7F5] tracking-tight mb-1 sm:mb-3">
               Инструмент <br className="hidden sm:inline" />
               для скрытых сообщений
             </h1>
-            <p className="text-[#92999F] text-xs sm:text-base max-w-xl leading-relaxed">
+            <p className="hidden sm:block text-[#92999F] text-xs sm:text-base max-w-xl leading-relaxed">
               Введите текст и получите сообщение, которое невозможно заметить при обычном чтении.
             </p>
           </div>
@@ -172,7 +176,7 @@ export const ToolPage: React.FC = () => {
               <div className="absolute inset-0 rounded-2xl bg-[#8BF58D]/20 blur-xl opacity-60 group-hover:opacity-100 transition-opacity" />
               <div className="relative w-24 h-24 lg:w-28 lg:h-28 rounded-3xl bg-[#171C22]/90 border border-white/[0.14] shadow-2xl backdrop-blur-xl flex items-center justify-center overflow-hidden">
                 <img 
-                  src="/assets/tool-lock-tile.jpg" 
+                  src={isDarkTheme ? '/assets/tool-lock-tile.jpg' : '/assets/tool-lock-tile-light.jpg'} 
                   alt="3D Lock Tile" 
                   className="w-full h-full object-cover opacity-90 transition-transform duration-500 group-hover:scale-105"
                   onError={(e) => {

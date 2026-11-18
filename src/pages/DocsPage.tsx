@@ -14,7 +14,11 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export const DocsPage: React.FC = () => {
+interface DocsPageProps {
+  isDarkTheme?: boolean;
+}
+
+export const DocsPage: React.FC<DocsPageProps> = () => {
   const [activeSection, setActiveSection] = useState<'how' | 'encoding' | 'decoding' | 'examples' | 'limits' | 'tips'>('how');
 
   const navItems = [

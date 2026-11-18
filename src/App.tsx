@@ -95,7 +95,7 @@ export const App: React.FC = () => {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
             >
-              <HomePage setActiveTab={setActiveTab} />
+              <HomePage setActiveTab={setActiveTab} isDarkTheme={isDarkTheme} />
             </motion.div>
           )}
 
@@ -107,7 +107,7 @@ export const App: React.FC = () => {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
             >
-              <ToolPage />
+              <ToolPage isDarkTheme={isDarkTheme} />
             </motion.div>
           )}
 
@@ -119,7 +119,7 @@ export const App: React.FC = () => {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
             >
-              <AboutPage />
+              <AboutPage isDarkTheme={isDarkTheme} />
             </motion.div>
           )}
 
@@ -131,7 +131,7 @@ export const App: React.FC = () => {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
             >
-              <DocsPage />
+              <DocsPage isDarkTheme={isDarkTheme} />
             </motion.div>
           )}
 
@@ -143,7 +143,7 @@ export const App: React.FC = () => {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
             >
-              <FaqPage />
+              <FaqPage isDarkTheme={isDarkTheme} />
             </motion.div>
           )}
         </AnimatePresence>

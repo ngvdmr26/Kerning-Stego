@@ -2,7 +2,11 @@ import React, { useState } from 'react';
 import { Plus, Minus, HelpCircle, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export const FaqPage: React.FC = () => {
+interface FaqPageProps {
+  isDarkTheme?: boolean;
+}
+
+export const FaqPage: React.FC<FaqPageProps> = ({ isDarkTheme = true }) => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   const faqs = [
@@ -20,7 +24,7 @@ export const FaqPage: React.FC = () => {
     },
     {
       q: 'Можно ли передавать большие сообщения?',
-      a: 'Размер скрываемого сообщения ограничен длиной текста-обёртки. На каждый байт секрета требуется 8 символов исходного текста (плюс 48 бит служебного заголовка CRC16 и длины). Для больших сообщений используйте длинные статьи или книги в качестве контейнера.',
+      a: 'Размер сообщения не ограничен: благодаря адаптивному алгоритму Kerning Stego, символы нулевой ширины распределяются между символами любого текста. Для огромных текстов используйте статьи или заметки в качестве контейнера.',
     },
     {
       q: 'Что произойдёт при копировании текста?',
@@ -37,11 +41,11 @@ export const FaqPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-80px)] py-6 sm:py-10 lg:py-14">
+    <div className="min-h-[calc(100vh-80px)] py-4 sm:py-10 lg:py-14">
       <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8">
         
         {/* Main Grid: Left Accordion + Right 3D Visual */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-start">
           
           {/* Left Column: Title + FAQ Accordion */}
           <div className="lg:col-span-8 text-left">
@@ -49,12 +53,13 @@ export const FaqPage: React.FC = () => {
               Часто задаваемые <br className="hidden sm:inline" />
               вопросы
             </h1>
-            <p className="text-[#92999F] text-xs sm:text-base max-w-xl mb-6 sm:mb-10 leading-relaxed">
-              Ответы на популярные вопросы о методе Кёрнинга и нашем инструменте.
+            <p className="text-[#92999F] text-xs sm:text-base max-w-xl mb-4 sm:mb-10 leading-relaxed">
+              <span className="hidden sm:inline">Ответы на популярные вопросы о методе Кёрнинга и нашем инструменте.</span>
+              <span className="sm:hidden">Популярные вопросы о стеганографии и работе сервиса.</span>
             </p>
 
             {/* Accordion list matching Reference */}
-            <div className="space-y-2.5 sm:space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {faqs.map((faq, index) => {
                 const isOpen = openIndex === index;
                 return (
@@ -65,12 +70,12 @@ export const FaqPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => toggleFaq(index)}
-                      className="w-full p-4 sm:p-6 text-left flex items-center justify-between gap-3 sm:gap-4 transition-colors hover:bg-white/[0.03] cursor-pointer"
+                      className="w-full p-3.5 sm:p-6 text-left flex items-center justify-between gap-3 sm:gap-4 transition-colors hover:bg-white/[0.03] cursor-pointer"
                     >
                       <span className="text-xs sm:text-base font-semibold text-[#F5F7F5] leading-snug">
                         {faq.q}
                       </span>
-                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#12161B] border border-white/10 flex items-center justify-center flex-shrink-0 text-[#92999F] transition-all">
+                      <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-[#12161B] border border-white/10 flex items-center justify-center flex-shrink-0 text-[#92999F] transition-all">
                         {isOpen ? (
                           <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#8BF58D]" />
                         ) : (
@@ -87,7 +92,7 @@ export const FaqPage: React.FC = () => {
                           exit={{ opacity: 0, height: 0 }}
                           transition={{ duration: 0.2 }}
                         >
-                          <div className="px-4 pb-4 sm:px-6 sm:pb-6 text-xs sm:text-sm text-[#92999F] leading-relaxed border-t border-white/[0.04] pt-3 sm:pt-4">
+                          <div className="px-3.5 pb-3.5 sm:px-6 sm:pb-6 text-xs sm:text-sm text-[#92999F] leading-relaxed border-t border-white/[0.04] pt-3 sm:pt-4">
                             {faq.a}
                           </div>
                         </motion.div>
@@ -100,18 +105,18 @@ export const FaqPage: React.FC = () => {
           </div>
 
           {/* Right Column: 3D Speech Bubble with Question Mark */}
-          <div className="lg:col-span-4 relative flex items-center justify-center pt-4 sm:pt-8 lg:pt-16 w-full">
-            <div className="absolute w-52 h-52 sm:w-64 sm:h-64 rounded-full bg-[#8BF58D]/15 blur-[80px] pointer-events-none" />
+          <div className="lg:col-span-4 relative flex items-center justify-center pt-2 sm:pt-8 lg:pt-16 w-full">
+            <div className="absolute w-44 h-44 sm:w-64 sm:h-64 rounded-full bg-[#8BF58D]/15 blur-[80px] pointer-events-none" />
 
             <motion.div 
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="relative w-full max-w-[260px] sm:max-w-[320px] group"
+              className="relative w-full max-w-[200px] sm:max-w-[320px] group"
             >
               <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-white/[0.14] bg-[#12161B]/80 shadow-2xl backdrop-blur-2xl">
                 <img 
-                  src="/assets/faq-bubble.jpg" 
+                  src={isDarkTheme ? '/assets/faq-bubble.jpg' : '/assets/faq-bubble-light.jpg'} 
                   alt="3D Speech Bubble with question mark" 
                   className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
                   onError={(e) => {
@@ -120,17 +125,17 @@ export const FaqPage: React.FC = () => {
                 />
 
                 {/* Question mark badge */}
-                <div className="absolute top-3 right-3 sm:top-4 sm:right-4 w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#080B0D]/80 backdrop-blur-md border border-white/10 flex items-center justify-center">
+                <div className="absolute top-2.5 right-2.5 sm:top-4 sm:right-4 w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-2xl bg-[#080B0D]/80 backdrop-blur-md border border-white/10 flex items-center justify-center">
                   <HelpCircle className="w-4 h-4 sm:w-6 sm:h-6 text-[#8BF58D] drop-shadow-[0_0_8px_rgba(139,245,141,0.5)]" />
                 </div>
 
-                <div className="p-4 sm:p-5 bg-gradient-to-t from-[#080B0D] via-[#101418]/90 to-transparent">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-[#8BF58D] mb-1">
+                <div className="p-3 sm:p-5 bg-gradient-to-t from-[#080B0D] via-[#101418]/90 to-transparent">
+                  <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-[#8BF58D] mb-0.5 sm:mb-1">
                     <ShieldCheck className="w-3.5 h-3.5" />
                     <span>Центр помощи</span>
                   </div>
-                  <p className="text-[11px] sm:text-xs text-[#92999F]">
-                    Остались вопросы? Ознакомьтесь с подробной документацией по протоколу.
+                  <p className="text-[10px] sm:text-xs text-[#92999F]">
+                    Ознакомьтесь с подробной документацией по протоколу.
                   </p>
                 </div>
               </div>
