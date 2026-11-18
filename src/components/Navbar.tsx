@@ -57,7 +57,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onClick={() => handleNavClick(item.id)}
                 className={`relative px-4 py-2 text-sm font-medium transition-all duration-200 cursor-pointer ${
                   isActive
-                    ? 'text-[#F5F7F5]'
+                    ? 'text-[#F5F7F5] font-semibold'
                     : 'text-[#92999F] hover:text-[#F5F7F5]'
                 }`}
               >
@@ -71,15 +71,19 @@ export const Navbar: React.FC<NavbarProps> = ({
         </nav>
 
         {/* Right Action Buttons */}
-        <div className="hidden md:flex items-center gap-4">
-          {/* Theme Toggle */}
+        <div className="hidden md:flex items-center gap-3 sm:gap-4">
+          {/* Theme Toggle Button */}
           <button
             onClick={toggleTheme}
             aria-label="Сменить тему оформления"
-            className="w-9 h-9 rounded-full flex items-center justify-center text-[#92999F] hover:text-[#F5F7F5] hover:bg-white/[0.05] transition-all cursor-pointer"
-            title="Тема оформления"
+            className="w-9 h-9 rounded-full flex items-center justify-center border border-white/10 bg-[#171C22]/80 hover:bg-white/[0.08] transition-all cursor-pointer shadow-sm"
+            title={isDarkTheme ? 'Переключить на светлую тему' : 'Переключить на тёмную тему'}
           >
-            {isDarkTheme ? <Sun className="w-4 h-4 text-[#92999F] hover:text-[#8BF58D] transition-colors" /> : <Moon className="w-4 h-4 text-amber-300" />}
+            {isDarkTheme ? (
+              <Sun className="w-4 h-4 text-[#92999F] hover:text-[#8BF58D] transition-colors" />
+            ) : (
+              <Moon className="w-4 h-4 text-emerald-600 transition-colors" />
+            )}
           </button>
 
           {/* Primary CTA button matching reference */}
@@ -92,14 +96,15 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </div>
 
-        {/* Mobile Buttons */}
-        <div className="flex md:hidden items-center gap-1">
+        {/* Mobile Header Buttons */}
+        <div className="flex md:hidden items-center gap-1.5">
           <button
             onClick={toggleTheme}
-            className="p-2 text-[#92999F] hover:text-white"
+            className="p-2 rounded-xl text-[#92999F] border border-white/10 bg-[#171C22]/50 hover:text-white"
             aria-label="Сменить тему"
+            title={isDarkTheme ? 'Светлая тема' : 'Тёмная тема'}
           >
-            {isDarkTheme ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            {isDarkTheme ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4 text-emerald-600" />}
           </button>
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -113,7 +118,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-b border-white/10 bg-[#080B0D]/98 backdrop-blur-2xl px-5 py-4 flex flex-col gap-2 animate-in slide-in-from-top-4 duration-200">
+        <div className="md:hidden border-b border-white/10 bg-[#080B0D]/98 backdrop-blur-2xl px-4 py-4 flex flex-col gap-2 animate-in slide-in-from-top-4 duration-200">
           {navItems.map((item) => (
             <button
               key={item.id}
@@ -128,7 +133,19 @@ export const Navbar: React.FC<NavbarProps> = ({
               {activeTab === item.id && <div className="w-1.5 h-1.5 rounded-full bg-[#8BF58D] shadow-[0_0_6px_#8BF58D]" />}
             </button>
           ))}
-          <div className="pt-2 border-t border-white/10 mt-1">
+          
+          <div className="pt-3 border-t border-white/10 mt-1 flex flex-col gap-2.5">
+            <button
+              onClick={toggleTheme}
+              className="w-full py-2.5 px-3.5 rounded-xl border border-white/10 text-xs font-semibold text-[#F5F7F5] flex items-center justify-between bg-[#12161B]"
+            >
+              <span>Тема оформления:</span>
+              <span className="flex items-center gap-1.5 text-[#8BF58D]">
+                {isDarkTheme ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5 text-emerald-600" />}
+                <span>{isDarkTheme ? 'Тёмная' : 'Светлая'}</span>
+              </span>
+            </button>
+
             <button
               onClick={() => handleNavClick('tool')}
               className="w-full py-3 rounded-xl bg-[#8BF58D] text-[#080B0D] font-bold text-center flex items-center justify-center gap-2 shadow-glow-sm"

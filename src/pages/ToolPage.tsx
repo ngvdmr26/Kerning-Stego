@@ -12,7 +12,8 @@ import {
   FileCode, 
   Binary,
   Layers,
-  Sparkles
+  Sparkles,
+  RotateCcw
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { encodeKerning, decodeKerning, analyzeKerningSpans } from '../lib/kerningStego';
@@ -190,7 +191,7 @@ export const ToolPage: React.FC = () => {
         <div className="w-full sm:w-fit mb-6 sm:mb-8 bg-[#12161B] p-1 rounded-2xl border border-white/[0.08] grid grid-cols-2 sm:flex sm:items-center gap-1">
           <button
             onClick={() => setMode('encode')}
-            className={`flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+            className={`flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
               mode === 'encode'
                 ? 'bg-[#171C22] text-[#8BF58D] shadow-glow-sm border border-white/[0.08]'
                 : 'text-[#92999F] hover:text-[#F5F7F5]'
@@ -202,7 +203,7 @@ export const ToolPage: React.FC = () => {
 
           <button
             onClick={() => setMode('decode')}
-            className={`flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+            className={`flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
               mode === 'decode'
                 ? 'bg-[#171C22] text-[#8BF58D] shadow-glow-sm border border-white/[0.08]'
                 : 'text-[#92999F] hover:text-[#F5F7F5]'
@@ -227,9 +228,25 @@ export const ToolPage: React.FC = () => {
                     <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#8BF58D]" />
                     <span>Исходный текст</span>
                   </label>
-                  <span className="text-[11px] sm:text-xs text-[#92999F] font-mono">
-                    {coverCharCount} символов
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCoverText('Информационная безопасность — это процесс защиты информации от несанкционированного доступа.')}
+                      className="text-[10px] sm:text-xs text-[#8BF58D] hover:underline cursor-pointer"
+                    >
+                      Пример
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCoverText('')}
+                      className="text-[10px] sm:text-xs text-[#92999F] hover:text-[#F5F7F5] cursor-pointer"
+                    >
+                      Сброс
+                    </button>
+                    <span className="text-[11px] sm:text-xs text-[#92999F] font-mono">
+                      {coverCharCount} симв.
+                    </span>
+                  </div>
                 </div>
                 <textarea
                   value={coverText}
@@ -248,9 +265,25 @@ export const ToolPage: React.FC = () => {
                     <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#8BF58D]" />
                     <span>Скрытое сообщение</span>
                   </label>
-                  <span className="text-[11px] sm:text-xs text-[#92999F] font-mono">
-                    {secretCharCount} символов
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSecretText('Секретная операция K-26')}
+                      className="text-[10px] sm:text-xs text-[#8BF58D] hover:underline cursor-pointer"
+                    >
+                      Пример
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSecretText('')}
+                      className="text-[10px] sm:text-xs text-[#92999F] hover:text-[#F5F7F5] cursor-pointer"
+                    >
+                      Сброс
+                    </button>
+                    <span className="text-[11px] sm:text-xs text-[#92999F] font-mono">
+                      {secretCharCount} симв.
+                    </span>
+                  </div>
                 </div>
                 <textarea
                   value={secretText}
@@ -358,7 +391,7 @@ export const ToolPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setShowInspector(!showInspector)}
-                      className="text-left text-[#8BF58D] hover:underline flex items-center gap-1 py-1"
+                      className="text-left text-[#8BF58D] hover:underline flex items-center gap-1 py-1 cursor-pointer"
                     >
                       <Layers className="w-3 h-3" />
                       <span>{showInspector ? 'Скрыть инспектор' : 'Показать инспектор кёрнинга'}</span>
@@ -367,14 +400,14 @@ export const ToolPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Action Buttons Row - full responsive wrap on mobile */}
+              {/* Action Buttons Row */}
               <div className="mt-5 sm:mt-8 pt-4 sm:pt-6 border-t border-white/[0.08] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
                 <div className="grid grid-cols-2 sm:flex sm:items-center gap-2">
                   {/* Download HTML with CSS kerning */}
                   <button
                     disabled={!encodeResult?.success}
                     onClick={() => encodeResult && downloadFile(encodeResult.htmlOutput, 'kerning-stego-doc.html', 'text/html')}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-medium text-[#92999F] hover:text-[#F5F7F5] bg-[#101418] border border-white/[0.1] hover:border-white/20 transition-all disabled:opacity-40"
+                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-medium text-[#92999F] hover:text-[#F5F7F5] bg-[#101418] border border-white/[0.1] hover:border-white/20 transition-all disabled:opacity-40 cursor-pointer"
                     title="Скачать автономный HTML-документ с визуальным кёрнингом"
                   >
                     <FileCode className="w-3.5 h-3.5 text-[#8BF58D]" />
@@ -385,7 +418,7 @@ export const ToolPage: React.FC = () => {
                   <button
                     disabled={!encodeResult?.success}
                     onClick={() => encodeResult && downloadFile(encodeResult.encodedText, 'kerning-stego-text.txt', 'text/plain')}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-medium text-[#92999F] hover:text-[#F5F7F5] bg-[#101418] border border-white/[0.1] hover:border-white/20 transition-all disabled:opacity-40"
+                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-medium text-[#92999F] hover:text-[#F5F7F5] bg-[#101418] border border-white/[0.1] hover:border-white/20 transition-all disabled:opacity-40 cursor-pointer"
                     title="Скачать TXT файл со скрытыми символами"
                   >
                     <Download className="w-3.5 h-3.5 text-[#8BF58D]" />
@@ -397,7 +430,7 @@ export const ToolPage: React.FC = () => {
                 <button
                   disabled={!encodeResult?.success}
                   onClick={() => encodeResult && copyToClipboard(encodeResult.encodedText, 'encode')}
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-[#F5F7F5] bg-[#101418] border border-white/[0.14] hover:bg-white/[0.06] hover:border-white/30 transition-all active:scale-95 disabled:opacity-40 cursor-pointer"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-[#F5F7F5] bg-[#101418] border border-white/[0.14] hover:bg-white/[0.06] hover:border-white/30 transition-all active:scale-95 disabled:opacity-40 cursor-pointer shadow-sm"
                 >
                   {copiedEncode ? (
                     <>
@@ -425,10 +458,25 @@ export const ToolPage: React.FC = () => {
             {/* Left Card: Cipher Input */}
             <div className="glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-7 flex flex-col gap-5">
               <div>
-                <label className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#F5F7F5] mb-2">
-                  <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#8BF58D]" />
-                  <span>Текст со скрытым сообщением</span>
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#F5F7F5]">
+                    <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#8BF58D]" />
+                    <span>Текст со скрытым сообщением</span>
+                  </label>
+                  {cipherInput && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCipherInput('');
+                        setDecodeResult(null);
+                      }}
+                      className="text-[10px] sm:text-xs text-[#92999F] hover:text-[#F5F7F5] flex items-center gap-1 cursor-pointer"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>Сброс</span>
+                    </button>
+                  )}
+                </div>
                 <textarea
                   value={cipherInput}
                   onChange={(e) => setCipherInput(e.target.value)}
@@ -445,7 +493,7 @@ export const ToolPage: React.FC = () => {
                     setCipherInput('');
                     setDecodeResult(null);
                   }}
-                  className="py-2.5 sm:py-2 px-3 text-xs text-[#92999F] hover:text-[#F5F7F5] transition-colors text-center"
+                  className="py-2.5 sm:py-2 px-3 text-xs text-[#92999F] hover:text-[#F5F7F5] transition-colors text-center cursor-pointer"
                 >
                   Очистить поле
                 </button>
@@ -529,7 +577,7 @@ export const ToolPage: React.FC = () => {
                 <button
                   disabled={!decodeResult?.success}
                   onClick={() => decodeResult?.message && copyToClipboard(decodeResult.message, 'decode')}
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-[#F5F7F5] bg-[#101418] border border-white/[0.14] hover:bg-white/[0.06] hover:border-white/30 transition-all active:scale-95 disabled:opacity-40 cursor-pointer"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-[#F5F7F5] bg-[#101418] border border-white/[0.14] hover:bg-white/[0.06] hover:border-white/30 transition-all active:scale-95 disabled:opacity-40 cursor-pointer shadow-sm"
                 >
                   {copiedDecode ? (
                     <>
