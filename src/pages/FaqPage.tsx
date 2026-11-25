@@ -129,7 +129,7 @@ export const FaqPage: React.FC<FaqPageProps> = ({ isDarkTheme = true }) => {
                   <HelpCircle className="w-4 h-4 sm:w-6 sm:h-6 text-[#8BF58D] drop-shadow-[0_0_8px_rgba(139,245,141,0.5)]" />
                 </div>
 
-                <div className="p-3 sm:p-5 bg-gradient-to-t from-[#080B0D] via-[#101418]/90 to-transparent">
+                <div className={`p-3 sm:p-5 bg-gradient-to-t ${isDarkTheme ? 'from-[#080B0D] via-[#101418]/90' : 'from-white via-white/85'} to-transparent`}>
                   <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-[#8BF58D] mb-0.5 sm:mb-1">
                     <ShieldCheck className="w-3.5 h-3.5" />
                     <span>Центр помощи</span>

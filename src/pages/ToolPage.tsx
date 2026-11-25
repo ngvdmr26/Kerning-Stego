@@ -15,7 +15,8 @@ import {
   RotateCcw
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { encodeKerning, decodeKerning, capacityBits, HEADER_BITS } from '../lib/kerningStego';
+import { motion } from 'framer-motion';
+import { encodeKerning, decodeKerning, capacityBits, BITS_PER_GAP, HEADER_BITS } from '../lib/kerningStego';
 import { StegoResult, DecodeResult } from '../lib/stegoTypes';
 import { ThemeImage } from '../components/ThemeImage';
 
@@ -51,6 +52,10 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
   const secretCharCount = Array.from(secretText).length;
   const coverCapacity = capacityBits(coverCharCount);
   const payloadBytesCapacity = Math.max(0, Math.floor((coverCapacity - HEADER_BITS) / 8));
+  const secretBytes = new TextEncoder().encode(secretText.trim()).length;
+  const requiredBits = HEADER_BITS + Math.max(0, secretBytes) * 8;
+  const requiredChars = Math.max(2, Math.ceil(requiredBits / BITS_PER_GAP) + 1);
+  const charsMissing = Math.max(0, requiredChars - coverCharCount);
 
   const handleEncode = () => {
     if (!coverText.trim()) {
@@ -86,15 +91,12 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
     }
   };
 
-  const handleDecode = () => {
-    if (!cipherInput.trim()) {
-      alert('Пожалуйста, вставьте зашифрованный текст или HTML в поле.');
-      return;
-    }
-
+  const runDecode = (text: string) => {
+    setCipherInput(text);
+    setMode('decode');
     setIsDecoding(true);
     setTimeout(() => {
-      const res = decodeKerning(cipherInput);
+      const res = decodeKerning(text);
       setDecodeResult(res);
       setIsDecoding(false);
 
@@ -114,6 +116,20 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
         }, 100);
       }
     }, 250);
+  };
+
+  const handleDecode = () => {
+    if (!cipherInput.trim()) {
+      alert('Пожалуйста, вставьте контейнер в поле.');
+      return;
+    }
+    runDecode(cipherInput);
+  };
+
+  const handleTestInDecoder = () => {
+    if (encodeResult?.success) {
+      runDecode(encodeResult.containerHtml);
+    }
   };
 
   const copyToClipboard = (text: string, type: 'encode' | 'decode') => {
@@ -146,7 +162,7 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
         {/* Top Header & 3D Floating Lock Tile */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 mb-6 sm:mb-10">
           <div>
-            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-[#F5F7F5] tracking-tight mb-1 sm:mb-3">
+            <h1 className="font-display text-2xl sm:text-4xl lg:text-5xl font-semibold text-[#F5F7F5] tracking-tight mb-1 sm:mb-3">
               Инструмент <br className="hidden sm:inline" />
               для скрытых сообщений
             </h1>
@@ -166,7 +182,7 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
                   alt="3D Lock Tile"
                   isDarkTheme={isDarkTheme}
                   className="w-full h-full"
-                  imageClassName="opacity-90 transition-transform duration-500 group-hover:scale-105"
+                  imageClassName="transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <Lock className="w-8 h-8 lg:w-10 lg:h-10 text-[#8BF58D] drop-shadow-[0_0_12px_rgba(139,245,141,0.6)]" />
@@ -180,26 +196,36 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
         <div className="w-full sm:w-fit mb-6 sm:mb-8 bg-[#12161B] p-1 rounded-2xl border border-white/[0.08] grid grid-cols-2 sm:flex sm:items-center gap-1">
           <button
             onClick={() => setMode('encode')}
-            className={`flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-              mode === 'encode'
-                ? 'bg-[#171C22] text-[#8BF58D] shadow-glow-sm border border-white/[0.08]'
-                : 'text-[#92999F] hover:text-[#F5F7F5]'
+            className={`relative flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
+              mode === 'encode' ? 'text-[#8BF58D]' : 'text-[#92999F] hover:text-[#F5F7F5]'
             }`}
           >
-            <Lock className="w-3.5 h-3.5 flex-shrink-0" />
-            <span className="truncate">Скрыть сообщение</span>
+            {mode === 'encode' && (
+              <motion.span
+                layoutId="mode-pill"
+                transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                className="absolute inset-0 rounded-xl bg-[#171C22] border border-white/[0.08] shadow-glow-sm"
+              />
+            )}
+            <Lock className="relative w-3.5 h-3.5 flex-shrink-0" />
+            <span className="relative truncate">Скрыть сообщение</span>
           </button>
 
           <button
             onClick={() => setMode('decode')}
-            className={`flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-              mode === 'decode'
-                ? 'bg-[#171C22] text-[#8BF58D] shadow-glow-sm border border-white/[0.08]'
-                : 'text-[#92999F] hover:text-[#F5F7F5]'
+            className={`relative flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
+              mode === 'decode' ? 'text-[#8BF58D]' : 'text-[#92999F] hover:text-[#F5F7F5]'
             }`}
           >
-            <Eye className="w-3.5 h-3.5 flex-shrink-0" />
-            <span className="truncate">Извлечь сообщение</span>
+            {mode === 'decode' && (
+              <motion.span
+                layoutId="mode-pill"
+                transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                className="absolute inset-0 rounded-xl bg-[#171C22] border border-white/[0.08] shadow-glow-sm"
+              />
+            )}
+            <Eye className="relative w-3.5 h-3.5 flex-shrink-0" />
+            <span className="relative truncate">Извлечь сообщение</span>
           </button>
         </div>
 
@@ -245,6 +271,27 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
                   rows={4}
                   className="w-full rounded-xl sm:rounded-2xl bg-[#101418] border border-white/[0.1] p-3 sm:p-4 text-base sm:text-sm text-[#F5F7F5] placeholder-[#62686F] focus:outline-none focus:border-[#8BF58D]/60 focus:ring-1 focus:ring-[#8BF58D]/30 transition-all resize-y min-h-[95px] leading-relaxed"
                 />
+
+                <div className="mt-2.5 space-y-1.5">
+                  <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 text-[10px] sm:text-[11px]">
+                    <span className={charsMissing > 0 ? 'text-amber-400' : 'text-[#8BF58D]'}>
+                      {charsMissing > 0
+                        ? `Нужно ещё ${charsMissing} симв. для текущего сообщения`
+                        : 'Объёма текста достаточно для сообщения'}
+                    </span>
+                    <span className="font-mono text-[#92999F]">
+                      {coverCharCount} / {requiredChars} симв.
+                    </span>
+                  </div>
+                  <div className="h-1 rounded-full bg-white/[0.07] overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        charsMissing > 0 ? 'bg-amber-400' : 'bg-[#8BF58D]'
+                      }`}
+                      style={{ width: `${Math.min(100, (coverCharCount / requiredChars) * 100)}%` }}
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Field 2: Скрытое сообщение */}
@@ -334,41 +381,47 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
                     <div>
                       {showInspector ? (
                         <div className="space-y-3">
-                          <div className="text-[11px] sm:text-xs text-[#8BF58D] font-mono flex items-center gap-1.5">
-                            <Binary className="w-3.5 h-3.5" />
-                            <span>Промежутки между символами:</span>
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="text-[11px] sm:text-xs text-[#8BF58D] font-mono flex items-center gap-1.5">
+                              <Binary className="w-3.5 h-3.5" />
+                              <span>Разметка зазоров</span>
+                            </div>
+                            <span className="text-[10px] font-mono text-[#62686F]">em</span>
                           </div>
-                          <div className="font-mono text-[10px] sm:text-xs bg-[#080B0D] p-2 rounded-xl border border-white/10 max-h-[200px] overflow-auto">
-                            <table className="w-full border-collapse">
-                              <thead>
-                                <tr className="text-left text-[#62686F]">
-                                  <th className="py-1 pr-2 font-normal">символ</th>
-                                  <th className="py-1 pr-2 font-normal">зазор</th>
-                                  <th className="py-1 pr-2 font-normal">px</th>
-                                  <th className="py-1 font-normal">биты</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {encodeResult.gaps.map((gap, idx) => (
-                                  <tr key={idx} className={gap.bits ? '' : 'text-[#62686F]'}>
-                                    <td className="py-0.5 pr-2 whitespace-pre text-[#F5F7F5]">
-                                      {gap.char === ' ' ? '␠' : gap.char === '\n' ? '¶' : gap.char}
-                                    </td>
-                                    <td className={`py-0.5 pr-2 ${gap.level > 0 ? 'text-[#8BF58D]' : ''}`}>
-                                      {gap.spacingEm.toFixed(2)}em
-                                    </td>
-                                    <td className="py-0.5 pr-2">{gap.spacingPx.toFixed(2)}</td>
-                                    <td className={`py-0.5 ${gap.level > 0 ? 'text-[#8BF58D]' : ''}`}>
-                                      {gap.bits || '—'}
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
+
+                          <div className="bg-[#080B0D] p-3 rounded-xl border border-white/10 max-h-[240px] overflow-auto">
+                            <div className="flex flex-wrap items-end gap-y-3">
+                              {encodeResult.gaps.map((gap, idx) => (
+                                <span key={idx} className="inline-flex items-end">
+                                  <span className="font-serif text-base sm:text-lg leading-none text-[#F5F7F5] whitespace-pre">
+                                    {gap.char === ' ' ? '\u00A0' : gap.char === '\n' ? '↵' : gap.char}
+                                  </span>
+                                  {idx < encodeResult.gaps.length - 1 && (
+                                    <span className="flex flex-col items-center mx-0.5 sm:mx-1">
+                                      <span
+                                        className={`w-px h-3.5 sm:h-4 ${
+                                          gap.level > 0
+                                            ? 'bg-[#8BF58D] shadow-[0_0_6px_rgba(139,245,141,0.7)]'
+                                            : 'bg-white/20'
+                                        }`}
+                                      />
+                                      <span
+                                        className={`mt-1 text-[8px] sm:text-[9px] leading-none tabular-nums ${
+                                          gap.level > 0 ? 'text-[#8BF58D]' : 'text-[#62686F]'
+                                        }`}
+                                      >
+                                        {gap.spacingEm.toFixed(2)}
+                                      </span>
+                                    </span>
+                                  )}
+                                </span>
+                              ))}
+                            </div>
                           </div>
+
                           <p className="text-[10px] sm:text-[11px] text-[#92999F] leading-relaxed">
-                            Каждый зазор несёт 2 бита: 00 = 0em, 01 = 0.02em, 10 = 0.04em, 11 = 0.06em
-                            (при 16px это 0 / 0.32 / 0.64 / 0.96 px).
+                            Чёрточка стоит между буквами, число под ней — зазор в em. 0.00 — обычный,
+                            0.02–0.06 — расширенные, именно они несут биты.
                           </p>
                         </div>
                       ) : (
@@ -411,39 +464,55 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
               </div>
 
               {/* Action Buttons Row */}
-              <div className="mt-5 sm:mt-8 pt-4 sm:pt-6 border-t border-white/[0.08] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
-                <div className="flex items-center gap-2">
+              <div className="mt-5 sm:mt-8 pt-4 sm:pt-6 border-t border-white/[0.08]">
+                <p className="text-[10px] sm:text-[11px] text-[#62686F] leading-relaxed mb-3">
+                  Сообщение живёт только в межбуквенных интервалах. В буфер обмена попадает
+                  HTML-контейнер — именно его читает декодер.
+                </p>
+
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2.5">
+                  {/* Primary: прогнать контейнер через декодер */}
+                  <button
+                    disabled={!encodeResult?.success}
+                    onClick={handleTestInDecoder}
+                    className="order-1 sm:order-3 sm:ml-auto w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-[#080B0D] bg-[#8BF58D] hover:bg-[#A4FBA6] transition-all hover:shadow-[0_0_20px_rgba(139,245,141,0.35)] active:scale-95 disabled:opacity-40 cursor-pointer"
+                    title="Отправить контейнер в декодер и сразу увидеть скрытый текст"
+                  >
+                    <Eye className="w-4 h-4" />
+                    <span>Проверить в декодере</span>
+                  </button>
+
+                  {/* Copy container */}
+                  <button
+                    disabled={!encodeResult?.success}
+                    onClick={() => encodeResult && copyToClipboard(encodeResult.containerHtml, 'encode')}
+                    className="order-2 w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-[#F5F7F5] bg-[#101418] border border-white/[0.14] hover:bg-white/[0.06] hover:border-white/30 transition-all active:scale-95 disabled:opacity-40 cursor-pointer shadow-sm"
+                    title="Копирует HTML-контейнер со всеми интервалами"
+                  >
+                    {copiedEncode ? (
+                      <>
+                        <Check className="w-4 h-4 text-[#8BF58D]" />
+                        <span className="text-[#8BF58D]">Скопировано!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4 text-[#92999F]" />
+                        <span>Копировать HTML</span>
+                      </>
+                    )}
+                  </button>
+
                   {/* Download HTML: интервалы сохраняются в файле */}
                   <button
                     disabled={!encodeResult?.success}
                     onClick={() => encodeResult && downloadFile(encodeResult.documentHtml, 'kerning-stego-doc.html', 'text/html')}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-medium text-[#92999F] hover:text-[#F5F7F5] bg-[#101418] border border-white/[0.1] hover:border-white/20 transition-all disabled:opacity-40 cursor-pointer"
+                    className="order-3 sm:order-1 w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-medium text-[#92999F] hover:text-[#F5F7F5] bg-[#101418] border border-white/[0.1] hover:border-white/20 transition-all disabled:opacity-40 cursor-pointer"
                     title="Скачать HTML-документ: межбуквенные интервалы сохранятся"
                   >
                     <FileCode className="w-3.5 h-3.5 text-[#8BF58D]" />
                     <span>Скачать HTML</span>
                   </button>
                 </div>
-
-                {/* Copy Button */}
-                <button
-                  disabled={!encodeResult?.success}
-                  onClick={() => encodeResult && copyToClipboard(encodeResult.containerHtml, 'encode')}
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-[#F5F7F5] bg-[#101418] border border-white/[0.14] hover:bg-white/[0.06] hover:border-white/30 transition-all active:scale-95 disabled:opacity-40 cursor-pointer shadow-sm"
-                  title="Копирует HTML-контейнер с интервалами: его можно вставить в декодер"
-                >
-                  {copiedEncode ? (
-                    <>
-                      <Check className="w-4 h-4 text-[#8BF58D]" />
-                      <span className="text-[#8BF58D]">Скопировано!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4 text-[#92999F]" />
-                      <span>Копировать контейнер</span>
-                    </>
-                  )}
-                </button>
               </div>
 
             </div>

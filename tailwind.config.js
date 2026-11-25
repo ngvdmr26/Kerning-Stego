@@ -33,7 +33,8 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['Inter', 'Manrope', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['Manrope', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['Unbounded', 'Manrope', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
       },
       boxShadow: {

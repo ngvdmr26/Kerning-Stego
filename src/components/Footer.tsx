@@ -7,7 +7,8 @@ interface FooterProps {
 
 export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
   return (
-    <footer className="w-full border-t border-white/[0.08] bg-[#080B0D] py-8 sm:py-12 px-4 sm:px-6 lg:px-8 mt-auto">
+    <footer className="relative w-full bg-[#080B0D] py-8 sm:py-12 px-4 sm:px-6 lg:px-8 mt-auto">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#8BF58D]/30 to-transparent" />
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
         
         {/* Brand */}
@@ -16,7 +17,7 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
             <div className="w-7 h-7 rounded-md bg-[#171C22] border border-white/10 flex items-center justify-center">
               <span className="font-extrabold text-sm text-[#8BF58D]">K</span>
             </div>
-            <span className="font-bold text-base tracking-tight text-[#F5F7F5]">
+            <span className="font-display text-sm sm:text-base tracking-tight text-[#F5F7F5]">
               Kerning Stego
             </span>
           </div>
