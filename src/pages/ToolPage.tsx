@@ -288,8 +288,8 @@ export const ToolPage: React.FC = () => {
                   onChange={(e) => setCoverText(e.target.value)}
                   placeholder="Введите текст, в котором будет скрыто сообщение..."
                   maxLength={4000}
-                  rows={4}
-                  className="w-full rounded-xl sm:rounded-2xl bg-[#101418] border border-white/[0.1] p-3 sm:p-4 text-base sm:text-sm text-[#F5F7F5] placeholder-[#62686F] focus:outline-none focus:border-[#8BF58D]/60 focus:ring-1 focus:ring-[#8BF58D]/30 transition-all resize-y min-h-[95px] leading-relaxed"
+                  rows={6}
+                  className="w-full rounded-xl sm:rounded-2xl bg-[#101418] border border-white/[0.1] p-3 sm:p-4 text-base sm:text-sm text-[#F5F7F5] placeholder-[#62686F] focus:outline-none focus:border-[#8BF58D]/60 focus:ring-1 focus:ring-[#8BF58D]/30 transition-all resize-y min-h-[150px] leading-relaxed"
                 />
 
                 <div className="mt-2.5 space-y-1.5">
