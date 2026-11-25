@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   Lock, 
   Eye, 
   ArrowRight, 
   Copy, 
   Check, 
-  Download, 
   RefreshCw, 
   AlertCircle, 
   CheckCircle2, 
@@ -16,8 +15,9 @@ import {
   RotateCcw
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { encodeKerning, decodeKerning, analyzeKerningSpans } from '../lib/kerningStego';
-import { StegoResult, DecodeResult, TextSpanAnalysis } from '../lib/stegoTypes';
+import { encodeKerning, decodeKerning, capacityBits, HEADER_BITS } from '../lib/kerningStego';
+import { StegoResult, DecodeResult } from '../lib/stegoTypes';
+import { ThemeImage } from '../components/ThemeImage';
 
 interface ToolPageProps {
   isDarkTheme?: boolean;
@@ -28,13 +28,12 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
 
   // Encode state
   const [coverText, setCoverText] = useState(
-    'Информационная безопасность — это процесс защиты информации от несанкционированного доступа.'
+    'Информационная безопасность — это состояние защищённости информации, при котором обеспечиваются её конфиденциальность, целостность и доступность. Защита данных требует комплексного подхода: организационных мер, контроля доступа и внимания к деталям, которые на первый взгляд кажутся незначительными.'
   );
   const [secretText, setSecretText] = useState('Секретная операция K-26');
   const [encodeResult, setEncodeResult] = useState<StegoResult | null>(null);
   const [copiedEncode, setCopiedEncode] = useState(false);
   const [showInspector, setShowInspector] = useState(false);
-  const [inspectedSpans, setInspectedSpans] = useState<TextSpanAnalysis[]>([]);
   const [justEncoded, setJustEncoded] = useState(false);
 
   // Decode state
@@ -50,20 +49,8 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
   // Counts
   const coverCharCount = Array.from(coverText).length;
   const secretCharCount = Array.from(secretText).length;
-  const estimatedBits = 48 + secretCharCount * 16;
-  const bitsPerChar = coverCharCount > 0 ? (estimatedBits / coverCharCount).toFixed(1) : '0';
-
-  // Run initial encode on mount
-  useEffect(() => {
-    if (coverText.trim() && secretText.trim()) {
-      const res = encodeKerning(coverText, secretText);
-      setEncodeResult(res);
-      if (res.success) {
-        setInspectedSpans(analyzeKerningSpans(res.encodedText));
-        setCipherInput(res.encodedText);
-      }
-    }
-  }, []);
+  const coverCapacity = capacityBits(coverCharCount);
+  const payloadBytesCapacity = Math.max(0, Math.floor((coverCapacity - HEADER_BITS) / 8));
 
   const handleEncode = () => {
     if (!coverText.trim()) {
@@ -79,8 +66,6 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
     setEncodeResult(res);
 
     if (res.success) {
-      setInspectedSpans(analyzeKerningSpans(res.encodedText));
-      setCipherInput(res.encodedText);
       setJustEncoded(true);
       setTimeout(() => setJustEncoded(false), 2000);
 
@@ -175,13 +160,13 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
             <div className="relative group">
               <div className="absolute inset-0 rounded-2xl bg-[#8BF58D]/20 blur-xl opacity-60 group-hover:opacity-100 transition-opacity" />
               <div className="relative w-24 h-24 lg:w-28 lg:h-28 rounded-3xl bg-[#171C22]/90 border border-white/[0.14] shadow-2xl backdrop-blur-xl flex items-center justify-center overflow-hidden">
-                <img 
-                  src={isDarkTheme ? '/assets/tool-lock-tile.jpg' : '/assets/tool-lock-tile-light.jpg'} 
-                  alt="3D Lock Tile" 
-                  className="w-full h-full object-cover opacity-90 transition-transform duration-500 group-hover:scale-105"
-                  onError={(e) => {
-                    (e.target as HTMLElement).style.display = 'none';
-                  }}
+                <ThemeImage
+                  dark="/assets/tool-lock-tile.jpg"
+                  light="/assets/tool-lock-tile-light.jpg"
+                  alt="3D Lock Tile"
+                  isDarkTheme={isDarkTheme}
+                  className="w-full h-full"
+                  imageClassName="opacity-90 transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <Lock className="w-8 h-8 lg:w-10 lg:h-10 text-[#8BF58D] drop-shadow-[0_0_12px_rgba(139,245,141,0.6)]" />
@@ -235,7 +220,7 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => setCoverText('Информационная безопасность — это процесс защиты информации от несанкционированного доступа.')}
+                      onClick={() => setCoverText('Информационная безопасность — это состояние защищённости информации, при котором обеспечиваются её конфиденциальность, целостность и доступность. Защита данных требует комплексного подхода: организационных мер, контроля доступа и внимания к деталям, которые на первый взгляд кажутся незначительными.')}
                       className="text-[10px] sm:text-xs text-[#8BF58D] hover:underline cursor-pointer"
                     >
                       Пример
@@ -300,13 +285,13 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
               </div>
 
               {/* Dynamic Capacity Info Pill */}
-              <div className="bg-[#101418] p-3 sm:p-3.5 rounded-xl border border-white/[0.06] flex items-center justify-between text-xs">
+              <div className="bg-[#101418] p-3 sm:p-3.5 rounded-xl border border-white/[0.06] flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] sm:text-xs">
                 <span className="text-[#92999F] flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-[#8BF58D]" />
-                  <span>Плотность стеганографии:</span>
+                  <span>Ёмкость текста:</span>
                 </span>
                 <span className="font-mono text-[#8BF58D] font-medium">
-                  {bitsPerChar} бит / символ
+                  {coverCapacity} бит · до {payloadBytesCapacity} байт сообщения
                 </span>
               </div>
 
@@ -351,31 +336,52 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
                         <div className="space-y-3">
                           <div className="text-[11px] sm:text-xs text-[#8BF58D] font-mono flex items-center gap-1.5">
                             <Binary className="w-3.5 h-3.5" />
-                            <span>Инспектор кёрнинга (подсвечены биты):</span>
+                            <span>Промежутки между символами:</span>
                           </div>
-                          <div className="font-mono text-[11px] sm:text-xs leading-loose bg-[#080B0D] p-3 rounded-xl border border-white/10 max-h-[170px] overflow-y-auto break-words">
-                            {inspectedSpans.map((span, idx) => (
-                              <span 
-                                key={idx}
-                                title={span.spacing}
-                                className={`transition-colors ${
-                                  span.bit === 1 
-                                    ? 'bg-[#8BF58D]/25 text-[#8BF58D] px-0.5 rounded font-bold' 
-                                    : span.bit === 0 
-                                      ? 'bg-blue-500/20 text-blue-300 px-0.5 rounded' 
-                                      : 'text-[#92999F]'
-                                }`}
-                              >
-                                {span.char}
-                              </span>
-                            ))}
+                          <div className="font-mono text-[10px] sm:text-xs bg-[#080B0D] p-2 rounded-xl border border-white/10 max-h-[200px] overflow-auto">
+                            <table className="w-full border-collapse">
+                              <thead>
+                                <tr className="text-left text-[#62686F]">
+                                  <th className="py-1 pr-2 font-normal">символ</th>
+                                  <th className="py-1 pr-2 font-normal">зазор</th>
+                                  <th className="py-1 pr-2 font-normal">px</th>
+                                  <th className="py-1 font-normal">биты</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {encodeResult.gaps.map((gap, idx) => (
+                                  <tr key={idx} className={gap.bits ? '' : 'text-[#62686F]'}>
+                                    <td className="py-0.5 pr-2 whitespace-pre text-[#F5F7F5]">
+                                      {gap.char === ' ' ? '␠' : gap.char === '\n' ? '¶' : gap.char}
+                                    </td>
+                                    <td className={`py-0.5 pr-2 ${gap.level > 0 ? 'text-[#8BF58D]' : ''}`}>
+                                      {gap.spacingEm.toFixed(2)}em
+                                    </td>
+                                    <td className="py-0.5 pr-2">{gap.spacingPx.toFixed(2)}</td>
+                                    <td className={`py-0.5 ${gap.level > 0 ? 'text-[#8BF58D]' : ''}`}>
+                                      {gap.bits || '—'}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
                           </div>
+                          <p className="text-[10px] sm:text-[11px] text-[#92999F] leading-relaxed">
+                            Каждый зазор несёт 2 бита: 00 = 0em, 01 = 0.02em, 10 = 0.04em, 11 = 0.06em
+                            (при 16px это 0 / 0.32 / 0.64 / 0.96 px).
+                          </p>
                         </div>
                       ) : (
-                        <p className="whitespace-pre-wrap select-all break-words">
-                          {encodeResult.encodedText}
-                        </p>
+                        <div
+                          className="whitespace-pre-wrap select-all break-words"
+                          dangerouslySetInnerHTML={{ __html: encodeResult.containerHtml }}
+                        />
                       )}
+                    </div>
+                  ) : encodeResult ? (
+                    <div className="text-red-400 text-xs sm:text-sm flex items-start gap-2.5 p-3 rounded-xl bg-red-500/10 border border-red-500/20">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                      <p>{encodeResult.error}</p>
                     </div>
                   ) : (
                     <p className="text-[#62686F] italic">
@@ -406,35 +412,25 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
 
               {/* Action Buttons Row */}
               <div className="mt-5 sm:mt-8 pt-4 sm:pt-6 border-t border-white/[0.08] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
-                <div className="grid grid-cols-2 sm:flex sm:items-center gap-2">
-                  {/* Download HTML with CSS kerning */}
+                <div className="flex items-center gap-2">
+                  {/* Download HTML: интервалы сохраняются в файле */}
                   <button
                     disabled={!encodeResult?.success}
-                    onClick={() => encodeResult && downloadFile(encodeResult.htmlOutput, 'kerning-stego-doc.html', 'text/html')}
+                    onClick={() => encodeResult && downloadFile(encodeResult.documentHtml, 'kerning-stego-doc.html', 'text/html')}
                     className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-medium text-[#92999F] hover:text-[#F5F7F5] bg-[#101418] border border-white/[0.1] hover:border-white/20 transition-all disabled:opacity-40 cursor-pointer"
-                    title="Скачать автономный HTML-документ с визуальным кёрнингом"
+                    title="Скачать HTML-документ: межбуквенные интервалы сохранятся"
                   >
                     <FileCode className="w-3.5 h-3.5 text-[#8BF58D]" />
-                    <span>HTML</span>
-                  </button>
-
-                  {/* Download TXT with Unicode kerning */}
-                  <button
-                    disabled={!encodeResult?.success}
-                    onClick={() => encodeResult && downloadFile(encodeResult.encodedText, 'kerning-stego-text.txt', 'text/plain')}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-medium text-[#92999F] hover:text-[#F5F7F5] bg-[#101418] border border-white/[0.1] hover:border-white/20 transition-all disabled:opacity-40 cursor-pointer"
-                    title="Скачать TXT файл со скрытыми символами"
-                  >
-                    <Download className="w-3.5 h-3.5 text-[#8BF58D]" />
-                    <span>TXT</span>
+                    <span>Скачать HTML</span>
                   </button>
                 </div>
 
                 {/* Copy Button */}
                 <button
                   disabled={!encodeResult?.success}
-                  onClick={() => encodeResult && copyToClipboard(encodeResult.encodedText, 'encode')}
+                  onClick={() => encodeResult && copyToClipboard(encodeResult.containerHtml, 'encode')}
                   className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-[#F5F7F5] bg-[#101418] border border-white/[0.14] hover:bg-white/[0.06] hover:border-white/30 transition-all active:scale-95 disabled:opacity-40 cursor-pointer shadow-sm"
+                  title="Копирует HTML-контейнер с интервалами: его можно вставить в декодер"
                 >
                   {copiedEncode ? (
                     <>
@@ -444,7 +440,7 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
                   ) : (
                     <>
                       <Copy className="w-4 h-4 text-[#92999F]" />
-                      <span>Копировать результат</span>
+                      <span>Копировать контейнер</span>
                     </>
                   )}
                 </button>
@@ -484,7 +480,7 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
                 <textarea
                   value={cipherInput}
                   onChange={(e) => setCipherInput(e.target.value)}
-                  placeholder="Вставьте сюда текст или HTML со скрытым сообщением..."
+                  placeholder="Вставьте HTML-контейнер целиком — со спанами и letter-spacing..."
                   rows={7}
                   className="w-full rounded-xl sm:rounded-2xl bg-[#101418] border border-white/[0.1] p-3 sm:p-4 text-base sm:text-sm text-[#F5F7F5] placeholder-[#62686F] focus:outline-none focus:border-[#8BF58D]/60 focus:ring-1 focus:ring-[#8BF58D]/30 transition-all resize-y min-h-[140px] leading-relaxed"
                 />
@@ -554,7 +550,7 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
                           «{decodeResult.message}»
                         </div>
                         <div className="text-[11px] sm:text-xs text-[#92999F] space-y-1 pt-1">
-                          <div>Метод: <span className="text-[#F5F7F5] font-mono">{decodeResult.detectionMethod}</span></div>
+                          <div>Метод: <span className="text-[#F5F7F5] font-mono">кёрнинг (letter-spacing)</span></div>
                           <div>Длина: <span className="text-[#F5F7F5]">{decodeResult.message.length} символов</span></div>
                           <div>CRC16: <span className="text-[#8BF58D] font-mono">{decodeResult.checksumValid ? 'ВАЛИДНА (совпала)' : 'НЕ СОВПАЛА'}</span></div>
                         </div>

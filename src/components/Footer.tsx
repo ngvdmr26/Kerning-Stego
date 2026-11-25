@@ -40,12 +40,6 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
             Инструмент
           </button>
           <button 
-            onClick={() => { setActiveTab('about'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-            className="hover:text-[#F5F7F5] transition-colors"
-          >
-            О проекте
-          </button>
-          <button 
             onClick={() => { setActiveTab('docs'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
             className="hover:text-[#F5F7F5] transition-colors"
           >
@@ -65,10 +59,6 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
           <span>Клиентская обработка 100% офлайн</span>
           <ArrowUpRight className="w-3 h-3 text-[#62686F]" />
         </div>
-      </div>
-      
-      <div className="max-w-7xl mx-auto mt-8 pt-6 border-t border-white/[0.04] text-center text-[11px] text-[#62686F]">
-        © 2026 Kerning Stego. Безопасность и типографическая стеганография.
       </div>
     </footer>
   );

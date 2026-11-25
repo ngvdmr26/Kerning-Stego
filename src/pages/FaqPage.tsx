@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Minus, HelpCircle, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ThemeImage } from '../components/ThemeImage';
 
 interface FaqPageProps {
   isDarkTheme?: boolean;
@@ -16,7 +17,7 @@ export const FaqPage: React.FC<FaqPageProps> = ({ isDarkTheme = true }) => {
     },
     {
       q: 'Можно ли обнаружить скрытый текст?',
-      a: 'Обычный читатель не заметит присутствия сообщения, так как межбуквенные интервалы меняются на доли пикселей или кодируются невидимыми символами нулевой ширины. Однако специализированный стегоанализ или проверка исходного кода страницы могут выявить наличие меток.',
+      a: 'Обычный читатель не заметит присутствия сообщения: интервалы меняются на доли пикселя. Но это не невидимые символы — расстояния реально записаны в letter-spacing, поэтому их можно измерить и увидеть в инспекторе или в коде страницы.',
     },
     {
       q: 'Поддерживаются ли другие языки?',
@@ -24,15 +25,15 @@ export const FaqPage: React.FC<FaqPageProps> = ({ isDarkTheme = true }) => {
     },
     {
       q: 'Можно ли передавать большие сообщения?',
-      a: 'Размер сообщения не ограничен: благодаря адаптивному алгоритму Kerning Stego, символы нулевой ширины распределяются между символами любого текста. Для огромных текстов используйте статьи или заметки в качестве контейнера.',
+      a: 'Размер ограничен длиной открытого текста: 2 бита на каждый промежуток, то есть около 1 байта на 4 символа. Для длинного сообщения нужен длинный текст-контейнер или несколько контейнеров.',
     },
     {
       q: 'Что произойдёт при копировании текста?',
-      a: 'При копировании текста через буфер обмена невидимые Unicode-символы сохраняются во всех современных мессенджерах (Telegram, WhatsApp), текстовых редакторах и браузерах. Для гарантированного сохранения визуального кёрнинга доступна выгрузка в автономный HTML-документ.',
+      a: 'При копировании обычным текстом интервалы теряются — останутся только буквы. Чтобы сообщение выжило, передавайте HTML-контейнер (кнопка «Копировать контейнер») или сохранённый HTML-файл.',
     },
     {
       q: 'Какие форматы поддерживаются?',
-      a: 'Инструмент поддерживает работу с обычным текстом (Plain Text), форматированным HTML-кодом, а также экспорт в файлы .txt и .html.',
+      a: 'На вход — обычный текст, на выходе — HTML-контейнер: разметка со span и letter-spacing. Её можно вставить обратно в декодер или сохранить как .html-файл.',
     },
   ];
 
@@ -115,13 +116,12 @@ export const FaqPage: React.FC<FaqPageProps> = ({ isDarkTheme = true }) => {
               className="relative w-full max-w-[200px] sm:max-w-[320px] group"
             >
               <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-white/[0.14] bg-[#12161B]/80 shadow-2xl backdrop-blur-2xl">
-                <img 
-                  src={isDarkTheme ? '/assets/faq-bubble.jpg' : '/assets/faq-bubble-light.jpg'} 
-                  alt="3D Speech Bubble with question mark" 
-                  className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
-                  onError={(e) => {
-                    (e.target as HTMLElement).style.display = 'none';
-                  }}
+                <ThemeImage
+                  dark="/assets/faq-bubble.jpg"
+                  light="/assets/faq-bubble-light.jpg"
+                  alt="3D Speech Bubble with question mark"
+                  isDarkTheme={isDarkTheme}
+                  imageClassName="transition-transform duration-700 group-hover:scale-105"
                 />
 
                 {/* Question mark badge */}

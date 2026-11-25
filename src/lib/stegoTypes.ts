@@ -1,13 +1,24 @@
+export interface GapCell {
+  char: string;
+  spacingEm: number;
+  spacingPx: number;
+  level: number;
+  bits: string;
+}
+
 export interface StegoResult {
   success: boolean;
-  encodedText: string;
-  htmlOutput: string;
+  containerHtml: string;
+  documentHtml: string;
+  plainText: string;
+  gaps: GapCell[];
   binaryBits: string;
   charCount: number;
   secretLength: number;
   coverLength: number;
   bitsUsed: number;
   maxCapacityBits: number;
+  payloadBytes: number;
   checksum: number;
   error?: string;
 }
@@ -18,7 +29,7 @@ export interface DecodeResult {
   binaryBits: string;
   extractedBitsCount: number;
   checksumValid: boolean;
-  detectionMethod: 'unicode-kerning' | 'html-kerning' | 'none';
+  detectionMethod: 'kerning-html' | 'none';
   error?: string;
   diagnostics?: {
     coverCharacters: number;
@@ -27,10 +38,4 @@ export interface DecodeResult {
     calculatedChecksum?: number;
     expectedChecksum?: number;
   };
-}
-
-export interface TextSpanAnalysis {
-  char: string;
-  bit: 0 | 1 | null; // null if not carrying a bit
-  spacing: string;
 }

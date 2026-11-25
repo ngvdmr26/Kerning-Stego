@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowRight, Play, Lock, Zap, Shield, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { ThemeImage } from '../components/ThemeImage';
 
 interface HomePageProps {
   setActiveTab: (tab: string) => void;
@@ -54,13 +55,13 @@ export const HomePage: React.FC<HomePageProps> = ({ setActiveTab, isDarkTheme = 
 
               <button
                 type="button"
-                onClick={() => setActiveTab('about')}
+                onClick={() => setActiveTab('docs')}
                 className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-6 sm:px-8 py-3 sm:py-3.5 rounded-full text-sm sm:text-base font-medium text-[#F5F7F5] bg-[#171C22]/80 backdrop-blur-md border border-white/[0.12] hover:bg-white/[0.08] hover:border-white/25 transition-all duration-200 cursor-pointer"
               >
                 <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-white/10 flex items-center justify-center">
                   <Play className="w-2 sm:w-2.5 h-2 sm:h-2.5 fill-current text-[#F5F7F5] ml-0.5" />
                 </div>
-                <span>Узнать больше</span>
+                <span>Как это работает</span>
               </button>
             </div>
           </motion.div>
@@ -81,14 +82,13 @@ export const HomePage: React.FC<HomePageProps> = ({ setActiveTab, isDarkTheme = 
               <div className="relative rounded-2xl sm:rounded-3xl p-5 sm:p-10 bg-gradient-to-br from-[#1C2229]/90 to-[#12161B]/95 border border-white/[0.14] shadow-2xl backdrop-blur-2xl transition-transform duration-500 overflow-hidden">
                 
                 {/* Theme-aware 3D Image if loaded, with beautiful typography layer */}
-                <img 
-                  src={isDarkTheme ? '/assets/hero-aa-card.jpg' : '/assets/hero-aa-card-light.jpg'}
+                <ThemeImage
+                  dark="/assets/hero-aa-card.jpg"
+                  light="/assets/hero-aa-card-light.jpg"
                   alt="3D Kerning Card"
-                  className="w-full h-auto object-cover rounded-xl mb-4 opacity-90 transition-opacity duration-300"
-                  onError={(e) => {
-                    // Fallback to CSS render if image is loading
-                    (e.target as HTMLElement).style.display = 'none';
-                  }}
+                  isDarkTheme={isDarkTheme}
+                  className="mb-4"
+                  imageClassName="rounded-xl opacity-90"
                 />
 
                 <div className="relative z-10 flex flex-col items-center justify-center py-2 sm:py-4">

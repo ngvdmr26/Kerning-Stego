@@ -81,10 +81,10 @@ export const DocsPage: React.FC<DocsPageProps> = () => {
             <div className="hidden lg:block mt-4 p-4 rounded-2xl bg-[#101418] border border-white/[0.06] text-xs text-[#92999F]">
               <div className="text-[#F5F7F5] font-semibold mb-1 flex items-center gap-1.5">
                 <FileCheck2 className="w-3.5 h-3.5 text-[#8BF58D]" />
-                <span>Спецификация v1.4</span>
+                <span>Формат контейнера</span>
               </div>
               <p className="text-[11px] text-[#62686F] leading-relaxed">
-                Соответствует стандартам Unicode 15.0 и CSS Fonts Module Level 3.
+                HTML: по одному span на символ, расстояние задаётся через letter-spacing.
               </p>
             </div>
           </div>
@@ -216,11 +216,15 @@ export const DocsPage: React.FC<DocsPageProps> = () => {
                   <div className="space-y-2.5 text-xs sm:text-sm text-[#92999F]">
                     <div className="flex items-start gap-2">
                       <Check className="w-4 h-4 text-[#8BF58D] flex-shrink-0 mt-0.5" />
-                      <span><strong>Бит «1»:</strong> отображается расширенным межбуквенным интервалом (+0.12em) или символом U+200B.</span>
+                      <span><strong>Пары «00» и «01»:</strong> промежуток 0em и 0.02em — базовый интервал, на глаз не отличается.</span>
                     </div>
                     <div className="flex items-start gap-2">
                       <Check className="w-4 h-4 text-[#8BF58D] flex-shrink-0 mt-0.5" />
-                      <span><strong>Бит «0»:</strong> отображается стандартным интервалом (-0.015em) или символом U+200C.</span>
+                      <span><strong>Пары «10» и «11»:</strong> промежуток 0.04em и 0.06em — доли пикселя при обычном кегле.</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-[#8BF58D] flex-shrink-0 mt-0.5" />
+                      <span><strong>Ёмкость:</strong> 2 бита на каждый промежуток, то есть около 1 байта на 4 символа открытого текста.</span>
                     </div>
                   </div>
                 </motion.div>
@@ -250,7 +254,7 @@ export const DocsPage: React.FC<DocsPageProps> = () => {
                         <span>Автодетектор</span>
                       </h4>
                       <p className="text-[11px] sm:text-xs text-[#92999F] leading-relaxed">
-                        Декодер поддерживает как обычные текстовые строки с невидимыми интервалами, так и HTML-код со стилевыми spans.
+                        Декодер читает letter-spacing у каждого span контейнера и восстанавливает биты в порядке символов.
                       </p>
                     </div>
 
@@ -284,7 +288,7 @@ export const DocsPage: React.FC<DocsPageProps> = () => {
                     <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-[#101418] border border-white/10">
                       <div className="text-xs text-[#8BF58D] font-mono mb-1.5">Пример 1: Водяные знаки для документов</div>
                       <p className="text-xs text-[#92999F] leading-relaxed">
-                        Внедрение идентификатора автора или метки времени в текст статьи. При копировании текста метка сохраняется.
+                        Внедрение идентификатора автора или метки времени в вёрстку статьи. Метка сохраняется, пока живёт HTML-разметка текста.
                       </p>
                     </div>
                     <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-[#101418] border border-white/10">
@@ -313,8 +317,8 @@ export const DocsPage: React.FC<DocsPageProps> = () => {
                   <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-[#171C22] border border-amber-500/20 flex items-start gap-2.5">
                     <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
                     <div>
-                      <strong className="text-[#F5F7F5] block mb-1 text-xs sm:text-sm">Очистка текста сторонними сервисами:</strong>
-                      <span className="text-xs text-[#92999F]">Некоторые фильтры могут удалять невидимые символы Unicode при агрессивной санитизации контента.</span>
+                      <strong className="text-[#F5F7F5] block mb-1 text-xs sm:text-sm">Копирование обычным текстом:</strong>
+                      <span className="text-xs text-[#92999F]">Мессенджеры и блокноты переносят только символы — интервалы теряются. Передавайте HTML-контейнер или сохранённый .html-файл.</span>
                     </div>
                   </div>
                 </motion.div>

@@ -4,17 +4,16 @@ import { Footer } from './components/Footer';
 import { FloatingGlow } from './components/FloatingGlow';
 import { HomePage } from './pages/HomePage';
 import { ToolPage } from './pages/ToolPage';
-import { AboutPage } from './pages/AboutPage';
 import { DocsPage } from './pages/DocsPage';
 import { FaqPage } from './pages/FaqPage';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Lock, Info, BookOpen, HelpCircle } from 'lucide-react';
+import { Home, Lock, BookOpen, HelpCircle } from 'lucide-react';
 
 export const App: React.FC = () => {
   // Sync tab with URL hash if provided
   const getInitialTab = (): string => {
     const hash = window.location.hash.replace('#/', '').replace('#', '');
-    if (['home', 'tool', 'about', 'docs', 'faq'].includes(hash)) {
+    if (['home', 'tool', 'docs', 'faq'].includes(hash)) {
       return hash;
     }
     return 'home';
@@ -37,7 +36,7 @@ export const App: React.FC = () => {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#/', '').replace('#', '');
-      if (['home', 'tool', 'about', 'docs', 'faq'].includes(hash)) {
+      if (['home', 'tool', 'docs', 'faq'].includes(hash)) {
         setActiveTabState(hash);
       }
     };
@@ -66,7 +65,6 @@ export const App: React.FC = () => {
   const bottomNavItems = [
     { id: 'home', label: 'Главная', icon: Home },
     { id: 'tool', label: 'Инструмент', icon: Lock },
-    { id: 'about', label: 'О проекте', icon: Info },
     { id: 'docs', label: 'Доки', icon: BookOpen },
     { id: 'faq', label: 'FAQ', icon: HelpCircle },
   ];
@@ -108,18 +106,6 @@ export const App: React.FC = () => {
               transition={{ duration: 0.2 }}
             >
               <ToolPage isDarkTheme={isDarkTheme} />
-            </motion.div>
-          )}
-
-          {activeTab === 'about' && (
-            <motion.div
-              key="about"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2 }}
-            >
-              <AboutPage isDarkTheme={isDarkTheme} />
             </motion.div>
           )}
 

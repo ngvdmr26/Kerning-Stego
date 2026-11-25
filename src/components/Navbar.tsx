@@ -19,7 +19,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   const navItems = [
     { id: 'home', label: 'Главная' },
     { id: 'tool', label: 'Инструмент' },
-    { id: 'about', label: 'О проекте' },
     { id: 'docs', label: 'Документация' },
     { id: 'faq', label: 'FAQ' },
   ];
