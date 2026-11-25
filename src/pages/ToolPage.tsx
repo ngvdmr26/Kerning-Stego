@@ -29,6 +29,8 @@ import { StegoResult, TextStegoResult, DecodeResult } from '../lib/stegoTypes';
 
 type Carrier = 'text' | 'html';
 
+const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
+
 type EncodeOutput =
   | { carrier: 'text'; res: TextStegoResult }
   | { carrier: 'html'; res: StegoResult };
@@ -420,63 +422,74 @@ export const ToolPage: React.FC = () => {
                 <div className="rounded-xl sm:rounded-2xl bg-[#101418] border border-white/[0.1] p-3.5 sm:p-5 min-h-[190px] sm:min-h-[230px] text-xs sm:text-sm leading-relaxed relative text-[#F5F7F5]">
                   {output ? (
                     output.res.success ? (
-                      <div>
-                        {showGaps && output.carrier === 'html' ? (
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="text-[11px] sm:text-xs text-[#8BF58D] font-mono flex items-center gap-1.5">
-                                <Binary className="w-3.5 h-3.5" />
-                                <span>Разметка зазоров</span>
-                              </div>
-                              <span className="text-[10px] font-mono text-[#62686F]">em</span>
-                            </div>
+                      output.carrier === 'html' ? (
+                        <div style={{ perspective: '1600px' }}>
+                          <motion.div
+                            className="relative min-h-[210px] sm:min-h-[240px]"
+                            style={{ transformStyle: 'preserve-3d' }}
+                            animate={{ rotateY: showGaps ? 180 : 0 }}
+                            transition={{ duration: 0.75, ease: EASE }}
+                          >
+                            <div
+                              className="whitespace-pre-wrap select-all break-words"
+                              style={{ backfaceVisibility: 'hidden' }}
+                              dangerouslySetInnerHTML={{ __html: output.res.containerHtml }}
+                            />
 
-                            <div className="bg-[#080B0D] p-3 rounded-xl border border-white/10 max-h-[240px] overflow-auto">
-                              <div className="flex flex-wrap items-end gap-y-3">
-                                {output.res.gaps.map((gap, idx) => (
-                                  <span key={idx} className="inline-flex items-end">
-                                    <span className="font-serif text-base sm:text-lg leading-none text-[#F5F7F5] whitespace-pre">
-                                      {gap.char === ' ' ? '\u00A0' : gap.char === '\n' ? '↵' : gap.char}
-                                    </span>
-                                    {idx < output.res.gaps.length - 1 && (
-                                      <span className="flex flex-col items-center mx-0.5 sm:mx-1">
-                                        <span
-                                          className={`w-px h-3.5 sm:h-4 ${
-                                            gap.level > 0
-                                              ? 'bg-[#8BF58D] shadow-[0_0_6px_rgba(139,245,141,0.7)]'
-                                              : 'bg-white/20'
-                                          }`}
-                                        />
-                                        <span
-                                          className={`mt-1 text-[8px] sm:text-[9px] leading-none tabular-nums ${
-                                            gap.level > 0 ? 'text-[#8BF58D]' : 'text-[#62686F]'
-                                          }`}
-                                        >
-                                          {gap.spacingEm.toFixed(2)}
-                                        </span>
+                            <div
+                              className="space-y-3 absolute inset-0 overflow-auto"
+                              style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="text-[11px] sm:text-xs text-[#8BF58D] font-mono flex items-center gap-1.5">
+                                  <Binary className="w-3.5 h-3.5" />
+                                  <span>Разметка зазоров</span>
+                                </div>
+                                <span className="text-[10px] font-mono text-[#62686F]">em</span>
+                              </div>
+
+                              <div className="bg-[#080B0D] p-3 rounded-xl border border-white/10">
+                                <div className="flex flex-wrap items-end gap-y-3">
+                                  {output.res.gaps.map((gap, idx) => (
+                                    <span key={idx} className="inline-flex items-end">
+                                      <span className="font-serif text-base sm:text-lg leading-none text-[#F5F7F5] whitespace-pre">
+                                        {gap.char === ' ' ? '\u00A0' : gap.char === '\n' ? '↵' : gap.char}
                                       </span>
-                                    )}
-                                  </span>
-                                ))}
+                                      {idx < output.res.gaps.length - 1 && (
+                                        <span className="flex flex-col items-center mx-0.5 sm:mx-1">
+                                          <span
+                                            className={`w-px h-3.5 sm:h-4 ${
+                                              gap.level > 0
+                                                ? 'bg-[#8BF58D] shadow-[0_0_6px_rgba(139,245,141,0.7)]'
+                                                : 'bg-white/20'
+                                            }`}
+                                          />
+                                          <span
+                                            className={`mt-1 text-[8px] sm:text-[9px] leading-none tabular-nums ${
+                                              gap.level > 0 ? 'text-[#8BF58D]' : 'text-[#62686F]'
+                                            }`}
+                                          >
+                                            {gap.spacingEm.toFixed(2)}
+                                          </span>
+                                        </span>
+                                      )}
+                                    </span>
+                                  ))}
+                                </div>
                               </div>
-                            </div>
 
-                            <p className="text-[10px] sm:text-[11px] text-[#92999F] leading-relaxed">
-                              Чёрточка — между буквами, число под ней — зазор в em. Расширенные
-                              зазоры несут биты.
-                            </p>
-                          </div>
-                        ) : output.carrier === 'html' ? (
-                          <div
-                            className="whitespace-pre-wrap select-all break-words"
-                            dangerouslySetInnerHTML={{ __html: output.res.containerHtml }}
-                          />
-                        ) : (
-                          <div className="whitespace-pre-wrap select-all break-words">
-                            {output.res.text}
-                          </div>
-                        )}
-                      </div>
+                              <p className="text-[10px] sm:text-[11px] text-[#92999F] leading-relaxed">
+                                Чёрточка — между буквами, число под ней — зазор в em. Расширенные
+                                зазоры несут биты.
+                              </p>
+                            </div>
+                          </motion.div>
+                        </div>
+                      ) : (
+                        <div className="whitespace-pre-wrap select-all break-words">
+                          {output.res.text}
+                        </div>
+                      )
                     ) : (
                       <div className="text-red-400 text-xs sm:text-sm flex items-start gap-2.5 p-3 rounded-xl bg-red-500/10 border border-red-500/20">
                         <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />

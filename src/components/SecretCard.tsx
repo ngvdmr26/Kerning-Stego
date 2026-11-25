@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff } from 'lucide-react';
 
@@ -35,10 +35,10 @@ export const SecretCard: React.FC = () => {
   }, []);
 
   return (
-    <div className="relative w-full max-w-[400px] mx-auto">
+    <div className="relative w-full max-w-[480px] mx-auto">
       <div className="absolute -inset-6 rounded-[36px] bg-[#8BF58D]/10 blur-3xl pointer-events-none" />
 
-      <div className="relative h-[320px] sm:h-[360px]" style={{ perspective: '1400px' }}>
+      <div className="relative h-[380px] sm:h-[420px]" style={{ perspective: '1400px' }}>
         <motion.div
           className="relative w-full h-full"
           style={{ transformStyle: 'preserve-3d' }}
@@ -47,7 +47,7 @@ export const SecretCard: React.FC = () => {
         >
           {/* Снаружи */}
           <div
-            className="absolute inset-0 rounded-3xl border border-white/[0.12] bg-gradient-to-br from-[#1C2229]/95 to-[#12161B]/98 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.85)] p-6 sm:p-7 flex flex-col justify-between overflow-hidden"
+            className="absolute inset-0 rounded-3xl border border-white/[0.12] bg-gradient-to-br from-[#1C2229]/95 to-[#12161B]/98 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.85)] p-6 sm:p-8 flex flex-col justify-between overflow-hidden"
             style={{ backfaceVisibility: 'hidden' }}
           >
             <div className="flex items-center justify-between">
@@ -57,7 +57,7 @@ export const SecretCard: React.FC = () => {
               <EyeOff className="w-4 h-4 text-[#62686F]" />
             </div>
 
-            <p className="font-display text-2xl sm:text-[28px] leading-[1.4] text-[#F5F7F5]">
+            <p className="font-display text-3xl sm:text-[34px] leading-[1.4] text-[#F5F7F5]">
               Встреча в 19:00
             </p>
 
@@ -71,7 +71,7 @@ export const SecretCard: React.FC = () => {
 
           {/* Внутри */}
           <div
-            className="absolute inset-0 rounded-3xl border border-[#8BF58D]/25 bg-[#0B0F12] shadow-[0_30px_80px_-30px_rgba(0,0,0,0.85)] p-5 sm:p-6 flex flex-col justify-between overflow-hidden"
+            className="absolute inset-0 rounded-3xl border border-[#8BF58D]/25 bg-[#0B0F12] shadow-[0_30px_80px_-30px_rgba(0,0,0,0.85)] p-6 sm:p-7 flex flex-col justify-between overflow-hidden"
             style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
           >
             <div className="flex items-center justify-between">
@@ -84,13 +84,13 @@ export const SecretCard: React.FC = () => {
             <div className="flex flex-wrap items-end gap-y-2 py-2">
               {DEMO.map((cell, idx) => (
                 <span key={idx} className="inline-flex items-end">
-                  <span className="font-display text-lg sm:text-xl leading-none text-[#F5F7F5] whitespace-pre">
+                  <span className="font-display text-xl sm:text-2xl leading-none text-[#F5F7F5] whitespace-pre">
                     {cell.char === ' ' ? '\u00A0' : cell.char}
                   </span>
                   {idx < DEMO.length - 1 && (
                     <span className="flex flex-col items-center mx-0.5 sm:mx-1">
                       <span
-                        className={`w-px h-3 sm:h-3.5 ${
+                        className={`w-px h-3.5 sm:h-4 ${
                           cell.gap > 0
                             ? 'bg-[#8BF58D] shadow-[0_0_6px_rgba(139,245,141,0.8)]'
                             : 'bg-white/20'
