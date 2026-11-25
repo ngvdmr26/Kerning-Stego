@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { ArrowRight, BookOpen, Lock, ShieldCheck, Binary } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ThemeImage } from '../components/ThemeImage';
@@ -9,6 +9,8 @@ interface HomePageProps {
   isDarkTheme?: boolean;
 }
 
+const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
+
 const container = {
   hidden: {},
   show: { transition: { staggerChildren: 0.09, delayChildren: 0.05 } },
@@ -16,7 +18,7 @@ const container = {
 
 const item = {
   hidden: { opacity: 0, y: 18 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } },
 };
 
 const steps = [
@@ -194,7 +196,7 @@ export const HomePage: React.FC<HomePageProps> = ({ setActiveTab, isDarkTheme = 
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.6, ease: EASE }}
           className="mt-16 sm:mt-24"
         >
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-5 sm:mb-8">
@@ -239,7 +241,7 @@ export const HomePage: React.FC<HomePageProps> = ({ setActiveTab, isDarkTheme = 
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.6, ease: EASE }}
           className="mt-14 sm:mt-20 grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8 items-center"
         >
           <div className="lg:col-span-5">
@@ -278,7 +280,7 @@ export const HomePage: React.FC<HomePageProps> = ({ setActiveTab, isDarkTheme = 
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.6, ease: EASE }}
           className="mt-14 sm:mt-20 mb-4"
         >
           <div className="glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-8 grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-10 items-center">
