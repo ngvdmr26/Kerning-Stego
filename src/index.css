@@ -1,4 +1,4 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -30,30 +30,6 @@
   --border-active: rgba(255, 255, 255, 0.2);
   --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.5);
   --grid-line: rgba(255, 255, 255, 0.02);
-}
-
-html.light {
-  color-scheme: light;
-  --bg-primary: #F8FAFC;
-  --bg-secondary: #EDF2F7;
-  --bg-card: #FFFFFF;
-  --bg-card-hover: #F8FAFC;
-  --bg-subtle: #F1F5F9;
-  --bg-input: #FFFFFF;
-  --bg-navbar: rgba(255, 255, 255, 0.92);
-  --text-primary: #0F172A;
-  --text-secondary: #475569;
-  --text-muted: #94A3B8;
-  --accent-green: #059669;
-  --accent-green-hover: #047857;
-  --accent-green-bg: rgba(5, 150, 105, 0.1);
-  --accent-green-border: rgba(5, 150, 105, 0.3);
-  --accent-green-glow: rgba(5, 150, 105, 0.2);
-  --border-subtle: rgba(0, 0, 0, 0.08);
-  --border-card: rgba(0, 0, 0, 0.1);
-  --border-active: rgba(0, 0, 0, 0.2);
-  --shadow-card: 0 10px 30px -5px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
-  --grid-line: rgba(0, 0, 0, 0.04);
 }
 
 body {
@@ -155,30 +131,6 @@ h3 {
   opacity: 0.95;
 }
 
-html.light .glass-card {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 45%),
-    var(--bg-card);
-  box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-}
-
-html.light .glass-card::before {
-  background: linear-gradient(
-    145deg,
-    rgba(5, 150, 105, 0.28),
-    rgba(15, 23, 42, 0.05) 38%,
-    rgba(5, 150, 105, 0) 65%,
-    rgba(56, 189, 248, 0.18)
-  );
-}
-
-html.light .glass-card:hover {
-  box-shadow:
-    0 24px 44px -18px rgba(15, 23, 42, 0.22),
-    0 0 0 1px rgba(5, 150, 105, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-}
-
 /* =========================================================
    TYPOGRAPHY / SURFACES / MOTION
    ========================================================= */
@@ -195,13 +147,6 @@ html.light .glass-card:hover {
   color: transparent;
 }
 
-html.light .text-gradient {
-  background: linear-gradient(100deg, #0f172a 6%, #065f46 48%, #059669 72%, #0f172a 98%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
 .text-balance {
   text-wrap: balance;
 }
@@ -210,10 +155,6 @@ html.light .text-gradient {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
   background-size: 180px 180px;
   opacity: 0.035;
-}
-
-html.light .bg-noise {
-  opacity: 0.05;
 }
 
 .aurora {
@@ -304,117 +245,6 @@ html.light .bg-noise {
   }
 }
 
-/* =========================================================
-   LIGHT THEME OVERRIDES FOR FULL THEME EXPERIENCE
-   ========================================================= */
-
-html.light header {
-  background-color: rgba(255, 255, 255, 0.92) !important;
-  border-bottom-color: rgba(0, 0, 0, 0.08) !important;
-}
-
-html.light footer {
-  background-color: #FFFFFF !important;
-  border-top-color: rgba(0, 0, 0, 0.08) !important;
-}
-
-html.light .bg-\[\#080B0D\] {
-  background-color: var(--bg-primary) !important;
-}
-html.light .bg-\[\#101418\] {
-  background-color: var(--bg-secondary) !important;
-}
-html.light .bg-\[\#171C22\] {
-  background-color: var(--bg-card) !important;
-}
-html.light .bg-\[\#12161B\] {
-  background-color: var(--bg-subtle) !important;
-}
-
-html.light .text-\[\#F5F7F5\] {
-  color: var(--text-primary) !important;
-}
-html.light .text-\[\#92999F\] {
-  color: var(--text-secondary) !important;
-}
-html.light .text-\[\#62686F\] {
-  color: var(--text-muted) !important;
-}
-
-html.light .border-white\/\[0\.08\],
-html.light .border-white\/\[0\.06\],
-html.light .border-white\/\[0\.04\],
-html.light .border-white\/\[0\.1\],
-html.light .border-white\/\[0\.12\],
-html.light .border-white\/\[0\.14\],
-html.light .border-white\/\[0\.16\],
-html.light .border-white\/10 {
-  border-color: var(--border-subtle) !important;
-}
-
-html.light .text-\[\#8BF58D\] {
-  color: var(--accent-green) !important;
-}
-html.light .bg-\[\#8BF58D\] {
-  background-color: var(--accent-green) !important;
-  color: #FFFFFF !important;
-}
-html.light .border-\[\#8BF58D\]\/30,
-html.light .border-\[\#8BF58D\]\/20 {
-  border-color: var(--accent-green-border) !important;
-}
-html.light .bg-\[\#8BF58D\]\/10,
-html.light .bg-\[\#8BF58D\]\/15,
-html.light .bg-\[\#8BF58D\]\/20 {
-  background-color: var(--accent-green-bg) !important;
-}
-
-html.light textarea,
-html.light input[type="text"] {
-  background-color: #FFFFFF !important;
-  color: #0F172A !important;
-  border-color: rgba(0, 0, 0, 0.12) !important;
-}
-html.light textarea:focus,
-html.light input[type="text"]:focus {
-  border-color: var(--accent-green) !important;
-  box-shadow: 0 0 0 2px var(--accent-green-bg) !important;
-}
-
-html.light .from-\[\#1C2229\]\/90 {
-  --tw-gradient-from: #FFFFFF !important;
-  --tw-gradient-stops: var(--tw-gradient-from), #F8FAFC !important;
-}
-html.light .to-\[\#12161B\]\/95 {
-  --tw-gradient-to: #F1F5F9 !important;
-}
-html.light .bg-\[\#171C22\]\/80,
-html.light .bg-\[\#171C22\]\/90 {
-  background-color: rgba(255, 255, 255, 0.9) !important;
-}
-html.light .bg-\[\#12161B\]\/80,
-html.light .bg-\[\#12161B\]\/90 {
-  background-color: rgba(255, 255, 255, 0.95) !important;
-}
-html.light .bg-\[\#080B0D\]\/80,
-html.light .bg-\[\#080B0D\]\/70,
-html.light .bg-\[\#080B0D\]\/90,
-html.light .bg-\[\#080B0D\]\/98 {
-  background-color: rgba(255, 255, 255, 0.95) !important;
-}
-
-html.light .font-mono.bg-\[\#080B0D\] {
-  background-color: #F1F5F9 !important;
-  color: #0F172A !important;
-  border-color: rgba(0, 0, 0, 0.1) !important;
-}
-
-html.light .fixed.bottom-3 .glass-card {
-  background-color: rgba(255, 255, 255, 0.95) !important;
-  border-color: rgba(0, 0, 0, 0.1) !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important;
-}
-
 /* Subtle grid line overlay */
 .bg-grid-cyber {
   background-size: 36px 36px;
@@ -476,13 +306,3 @@ html.light .fixed.bottom-3 .glass-card {
   background: rgba(139, 245, 141, 0.3);
 }
 
-html.light .range-kerning::-webkit-slider-thumb {
-  background: #059669;
-  border-color: #ffffff;
-  box-shadow: 0 0 0 1px rgba(5, 150, 105, 0.4), 0 0 14px rgba(5, 150, 105, 0.35);
-}
-
-html.light .range-kerning::-moz-range-thumb {
-  background: #059669;
-  border-color: #ffffff;
-}

@@ -14,11 +14,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-interface DocsPageProps {
-  isDarkTheme?: boolean;
-}
-
-export const DocsPage: React.FC<DocsPageProps> = () => {
+export const DocsPage: React.FC = () => {
   const [activeSection, setActiveSection] = useState<'how' | 'encoding' | 'decoding' | 'examples' | 'limits' | 'tips'>('how');
 
   const navItems = [
@@ -90,7 +86,7 @@ export const DocsPage: React.FC<DocsPageProps> = () => {
           </div>
 
           {/* Right Content Area */}
-          <div className="lg:col-span-8 glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-8 lg:p-10 min-h-[420px]">
+          <div className="lg:col-span-8 glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-7 lg:p-9">
             <AnimatePresence mode="wait">
               
               {/* SECTION 1: КАК ЭТО РАБОТАЕТ? */}
@@ -108,9 +104,10 @@ export const DocsPage: React.FC<DocsPageProps> = () => {
                       Как это работает?
                     </h2>
                     <p className="text-[#92999F] text-xs sm:text-base leading-relaxed">
-                      Метод Кёрнинга основан на изменении расстояний между символами в тексте.
-                      Эти изменения практически незаметны для человека, но могут быть использованы
-                      для передачи скрытой информации.
+                      Сообщение можно спрятать двумя способами. В текстовом носителе биты живут в
+                      невидимых символах нулевой ширины — такое сообщение копируется в мессенджер
+                      как обычный текст. В HTML-носителе биты записаны в межбуквенных интервалах
+                      кёрнинга: это тоньше, но работает только там, где сохраняется разметка.
                     </p>
                   </div>
 
@@ -226,6 +223,10 @@ export const DocsPage: React.FC<DocsPageProps> = () => {
                       <Check className="w-4 h-4 text-[#8BF58D] flex-shrink-0 mt-0.5" />
                       <span><strong>Ёмкость:</strong> 2 бита на каждый промежуток, то есть около 1 байта на 4 символа открытого текста.</span>
                     </div>
+                    <div className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-[#8BF58D] flex-shrink-0 mt-0.5" />
+                      <span><strong>Текстовый носитель:</strong> до 8 бит на символ, маркеры нулевой ширины переживают копирование.</span>
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -244,7 +245,8 @@ export const DocsPage: React.FC<DocsPageProps> = () => {
                     Декодирование и валидация
                   </h2>
                   <p className="text-[#92999F] text-xs sm:text-sm leading-relaxed">
-                    Процедура извлечения информации полностью автономна и не требует исходного оригинального текста.
+                    Декодер сам определяет носитель: сначала ищет letter-spacing в разметке, затем —
+                    невидимые маркеры в тексте. Исходный открытый текст не нужен.
                   </p>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -317,8 +319,8 @@ export const DocsPage: React.FC<DocsPageProps> = () => {
                   <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-[#171C22] border border-amber-500/20 flex items-start gap-2.5">
                     <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
                     <div>
-                      <strong className="text-[#F5F7F5] block mb-1 text-xs sm:text-sm">Копирование обычным текстом:</strong>
-                      <span className="text-xs text-[#92999F]">Мессенджеры и блокноты переносят только символы — интервалы теряются. Передавайте HTML-контейнер или сохранённый .html-файл.</span>
+                      <strong className="text-[#F5F7F5] block mb-1 text-xs sm:text-sm">Кёрнинг не переживает обычный текст:</strong>
+                      <span className="text-xs text-[#92999F]">Если скопировать HTML-носитель как простой текст, интервалы исчезнут. Для мессенджеров выбирайте текстовый носитель — невидимые маркеры сохраняются при вставке.</span>
                     </div>
                   </div>
                 </motion.div>

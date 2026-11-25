@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { FloatingGlow } from './components/FloatingGlow';
@@ -9,23 +9,15 @@ import { FaqPage } from './pages/FaqPage';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Home, Lock, BookOpen, HelpCircle } from 'lucide-react';
 
+const TABS = ['home', 'tool', 'docs', 'faq'];
+
+const getInitialTab = (): string => {
+  const hash = window.location.hash.replace('#/', '').replace('#', '');
+  return TABS.includes(hash) ? hash : 'home';
+};
+
 export const App: React.FC = () => {
-  // Sync tab with URL hash if provided
-  const getInitialTab = (): string => {
-    const hash = window.location.hash.replace('#/', '').replace('#', '');
-    if (['home', 'tool', 'docs', 'faq'].includes(hash)) {
-      return hash;
-    }
-    return 'home';
-  };
-
   const [activeTab, setActiveTabState] = useState<string>(getInitialTab);
-
-  // Theme state persisted in localStorage
-  const [isDarkTheme, setIsDarkTheme] = useState<boolean>(() => {
-    const saved = localStorage.getItem('theme');
-    return saved !== 'light'; // default to true (dark mode matching reference)
-  });
 
   const setActiveTab = (tab: string) => {
     setActiveTabState(tab);
@@ -36,32 +28,12 @@ export const App: React.FC = () => {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#/', '').replace('#', '');
-      if (['home', 'tool', 'docs', 'faq'].includes(hash)) {
-        setActiveTabState(hash);
-      }
+      if (TABS.includes(hash)) setActiveTabState(hash);
     };
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  // Update HTML class whenever theme changes
-  useEffect(() => {
-    if (isDarkTheme) {
-      document.documentElement.classList.add('dark');
-      document.documentElement.classList.remove('light');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.classList.add('light');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [isDarkTheme]);
-
-  const toggleTheme = () => {
-    setIsDarkTheme(prev => !prev);
-  };
-
-  // Mobile Bottom Navigation items
   const bottomNavItems = [
     { id: 'home', label: 'Главная', icon: Home },
     { id: 'tool', label: 'Инструмент', icon: Lock },
@@ -70,19 +42,11 @@ export const App: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col relative transition-colors duration-300 pb-20 md:pb-0">
-      {/* Background cyber streaks & glow */}
-      <FloatingGlow isDarkTheme={isDarkTheme} />
+    <div className="min-h-screen flex flex-col relative pb-20 md:pb-0">
+      <FloatingGlow />
 
-      {/* Navigation Bar */}
-      <Navbar 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        isDarkTheme={isDarkTheme}
-        toggleTheme={toggleTheme}
-      />
+      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      {/* Main Content Pages with smooth fade transitions */}
       <main className="flex-1 relative z-10">
         <AnimatePresence mode="wait">
           {activeTab === 'home' && (
@@ -93,7 +57,7 @@ export const App: React.FC = () => {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
             >
-              <HomePage setActiveTab={setActiveTab} isDarkTheme={isDarkTheme} />
+              <HomePage setActiveTab={setActiveTab} />
             </motion.div>
           )}
 
@@ -105,7 +69,7 @@ export const App: React.FC = () => {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
             >
-              <ToolPage isDarkTheme={isDarkTheme} />
+              <ToolPage />
             </motion.div>
           )}
 
@@ -117,7 +81,7 @@ export const App: React.FC = () => {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
             >
-              <DocsPage isDarkTheme={isDarkTheme} />
+              <DocsPage />
             </motion.div>
           )}
 
@@ -129,18 +93,16 @@ export const App: React.FC = () => {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
             >
-              <FaqPage isDarkTheme={isDarkTheme} />
+              <FaqPage />
             </motion.div>
           )}
         </AnimatePresence>
       </main>
 
-      {/* Footer */}
       <Footer setActiveTab={setActiveTab} />
 
-      {/* Modern Mobile Floating Bottom Dock (Visible only on mobile < md) */}
       <div className="md:hidden fixed bottom-3 left-3 right-3 z-50 max-w-sm mx-auto">
-        <div className="glass-card rounded-2xl p-1.5 flex items-center justify-around shadow-2xl backdrop-blur-2xl border border-white/[0.12] dark:border-white/[0.12] bg-[#12161B]/90 dark:bg-[#12161B]/90 light:bg-white/95">
+        <div className="glass-card rounded-2xl p-1.5 flex items-center justify-around shadow-2xl backdrop-blur-2xl border border-white/[0.12] bg-[#12161B]/90">
           {bottomNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;

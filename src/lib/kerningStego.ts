@@ -1,4 +1,4 @@
-import { StegoResult, DecodeResult, GapCell } from './stegoTypes';
+﻿import { StegoResult, DecodeResult, GapCell, TextStegoResult } from './stegoTypes';
 
 /**
  * Каждый промежуток между двумя соседними символами несёт 2 бита.
@@ -129,6 +129,78 @@ export function encodeKerning(coverText: string, secretText: string): StegoResul
   };
 }
 
+export const TEXT_BITS_PER_CHAR = 8;
+
+export function textCapacityBits(coverLength: number): number {
+  return Math.max(0, coverLength) * TEXT_BITS_PER_CHAR;
+}
+
+/**
+ * Текстовый носитель: биты живут в невидимых символах нулевой ширины,
+ * которые остаются частью строки при копировании в мессенджер или файл.
+ * Кёрнинг так не умеет — он существует только в форматировании.
+ */
+export function encodeTextCarrier(coverText: string, secretText: string): TextStegoResult {
+  const cover = coverText.replace(/^\s+|\s+$/g, '');
+  const secret = secretText.replace(/^\s+|\s+$/g, '');
+  const chars = Array.from(cover);
+  const limit = textCapacityBits(chars.length);
+
+  const fail = (error: string): TextStegoResult => ({
+    success: false,
+    text: '',
+    binaryBits: '',
+    bitsUsed: 0,
+    maxCapacityBits: limit,
+    payloadBytes: 0,
+    checksum: 0,
+    error,
+  });
+
+  if (!cover) return fail('Введите исходный текст, в котором будет спрятано сообщение.');
+  if (!secret) return fail('Введите секретное сообщение для скрытия.');
+
+  const bytes = new TextEncoder().encode(secret);
+  const checksum = calculateCRC16(bytes);
+  const header =
+    MAGIC_HEADER_NUM.toString(2).padStart(16, '0') +
+    bytes.length.toString(2).padStart(16, '0') +
+    checksum.toString(2).padStart(16, '0');
+  let payload = '';
+  for (let i = 0; i < bytes.length; i++) payload += bytes[i].toString(2).padStart(8, '0');
+
+  const bits = header + payload;
+  if (bits.length > limit) {
+    const freeBytes = Math.max(0, Math.floor((limit - HEADER_BITS) / 8));
+    return fail(
+      `Не хватает ёмкости: сообщение занимает ${Math.ceil(bits.length / 8)} байт (${bits.length} бит), а текст вмещает ${freeBytes} байт (${limit} бит). Увеличьте текст или сократите сообщение.`
+    );
+  }
+
+  const perChar = Math.ceil(bits.length / chars.length);
+  let out = LEGACY_HEADER_MARKER;
+  let idx = 0;
+
+  for (const ch of chars) {
+    out += ch;
+    for (let k = 0; k < perChar && idx < bits.length; k++) {
+      out += bits[idx++] === '1' ? CHAR_LEGACY_BIT_1 : CHAR_LEGACY_BIT_0;
+    }
+  }
+
+  out += LEGACY_FOOTER_MARKER;
+
+  return {
+    success: true,
+    text: out,
+    binaryBits: bits,
+    bitsUsed: bits.length,
+    maxCapacityBits: limit,
+    payloadBytes: bytes.length,
+    checksum,
+  };
+}
+
 export function decodeKerning(input: string): DecodeResult {
   if (!input.trim()) {
     return {
@@ -143,16 +215,16 @@ export function decodeKerning(input: string): DecodeResult {
   }
 
   const levels = extractGapLevels(input);
-  if (levels.length > 0) {
-    let bits = '';
-    for (const level of levels) bits += level.toString(2).padStart(BITS_PER_GAP, '0');
-    return decodeBits(bits, input.length);
-  }
+    if (levels.length > 0) {
+      let bits = '';
+      for (const level of levels) bits += level.toString(2).padStart(BITS_PER_GAP, '0');
+      return decodeBits(bits, input.length, 'kerning-html');
+    }
 
-  const legacyBits = extractLegacyBits(input);
-  if (legacyBits.length >= HEADER_BITS) {
-    return decodeBits(legacyBits, input.length);
-  }
+    const legacyBits = extractLegacyBits(input);
+    if (legacyBits.length >= HEADER_BITS) {
+      return decodeBits(legacyBits, input.length, 'text-unicode');
+    }
 
   return {
     success: false,
@@ -205,7 +277,11 @@ function extractLegacyBits(raw: string): string {
   return bits;
 }
 
-function decodeBits(bits: string, rawLength: number): DecodeResult {
+function decodeBits(
+  bits: string,
+  rawLength: number,
+  method: DecodeResult['detectionMethod'] = 'kerning-html'
+): DecodeResult {
   if (bits.length < HEADER_BITS) {
     return {
       success: false,
@@ -213,7 +289,7 @@ function decodeBits(bits: string, rawLength: number): DecodeResult {
       binaryBits: bits,
       extractedBitsCount: bits.length,
       checksumValid: false,
-      detectionMethod: 'kerning-html',
+      detectionMethod: method,
       error: 'Недостаточно данных для извлечения (заголовок повреждён).',
     };
   }
@@ -229,7 +305,7 @@ function decodeBits(bits: string, rawLength: number): DecodeResult {
       binaryBits: bits,
       extractedBitsCount: bits.length,
       checksumValid: false,
-      detectionMethod: 'kerning-html',
+      detectionMethod: method,
       error: 'Сигнатура Kerning Stego не распознана. Эти интервалы не содержат валидного контейнера.',
       diagnostics: { coverCharacters: rawLength, markersFound: bits.length },
     };
@@ -243,7 +319,7 @@ function decodeBits(bits: string, rawLength: number): DecodeResult {
       binaryBits: bits,
       extractedBitsCount: bits.length,
       checksumValid: false,
-      detectionMethod: 'kerning-html',
+      detectionMethod: method,
       error: `Сообщение повреждено: ожидалось ${byteLength} байт, найдено ${Math.floor(payloadBits.length / 8)} байт.`,
     };
   }
@@ -264,7 +340,7 @@ function decodeBits(bits: string, rawLength: number): DecodeResult {
       binaryBits: bits,
       extractedBitsCount: bits.length,
       checksumValid,
-      detectionMethod: 'kerning-html',
+      detectionMethod: method,
       diagnostics: {
         coverCharacters: rawLength,
         markersFound: bits.length,
@@ -280,7 +356,7 @@ function decodeBits(bits: string, rawLength: number): DecodeResult {
       binaryBits: bits,
       extractedBitsCount: bits.length,
       checksumValid: false,
-      detectionMethod: 'kerning-html',
+      detectionMethod: method,
       error: 'Ошибка декодирования UTF-8: интервалы были изменены после создания контейнера.',
     };
   }

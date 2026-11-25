@@ -1,20 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Sun, Moon, ArrowRight, Menu, X } from 'lucide-react';
+import { ArrowRight, Menu, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface NavbarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  isDarkTheme?: boolean;
-  toggleTheme?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({
-  activeTab,
-  setActiveTab,
-  isDarkTheme = true,
-  toggleTheme,
-}) => {
+export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -42,12 +35,11 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header
       className={`sticky top-0 z-50 w-full backdrop-blur-xl transition-all duration-300 ${
         scrolled
-          ? 'bg-[#080B0D]/80 shadow-[0_18px_40px_-28px_rgba(0,0,0,0.9)]'
+          ? 'bg-[#080B0D]/85 shadow-[0_18px_40px_-28px_rgba(0,0,0,0.9)]'
           : 'bg-[#080B0D]/60'
       } border-b border-white/[0.08]`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
-        {/* Brand */}
         <div
           onClick={() => handleNavClick('home')}
           className="flex items-center gap-2 sm:gap-2.5 cursor-pointer group"
@@ -56,7 +48,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span className="font-display text-sm sm:text-base text-[#8BF58D] leading-none pt-0.5">
               K
             </span>
-            <span className="absolute inset-0 rounded-xl bg-[#8BF58D]/0 group-hover:bg-[#8BF58D]/5 transition-colors" />
           </div>
           <div className="flex flex-col leading-none">
             <span className="font-display text-sm sm:text-base text-[#F5F7F5] group-hover:text-white transition-colors">
@@ -68,7 +59,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-1">
           {navItems.map((navItem) => {
             const isActive = activeTab === navItem.id;
@@ -93,21 +83,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           })}
         </nav>
 
-        {/* Right actions */}
         <div className="hidden md:flex items-center gap-3">
-          <button
-            onClick={toggleTheme}
-            aria-label="Сменить тему оформления"
-            className="w-9 h-9 rounded-full flex items-center justify-center border border-white/10 bg-[#171C22]/80 hover:bg-white/[0.08] hover:border-white/20 transition-all cursor-pointer shadow-sm"
-            title={isDarkTheme ? 'Переключить на светлую тему' : 'Переключить на тёмную тему'}
-          >
-            {isDarkTheme ? (
-              <Sun className="w-4 h-4 text-[#92999F]" />
-            ) : (
-              <Moon className="w-4 h-4 text-emerald-600" />
-            )}
-          </button>
-
           <button
             onClick={() => handleNavClick('tool')}
             className="btn-shine flex items-center gap-1.5 px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold bg-[#8BF58D] text-[#080B0D] hover:bg-[#A4FBA6] hover:shadow-[0_0_22px_rgba(139,245,141,0.4)] transition-all transform active:scale-95 cursor-pointer"
@@ -117,16 +93,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </div>
 
-        {/* Mobile actions */}
         <div className="flex md:hidden items-center gap-1.5">
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-xl text-[#92999F] border border-white/10 bg-[#171C22]/50 hover:text-white"
-            aria-label="Сменить тему"
-            title={isDarkTheme ? 'Светлая тема' : 'Тёмная тема'}
-          >
-            {isDarkTheme ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4 text-emerald-600" />}
-          </button>
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="p-2 text-[#F5F7F5] hover:text-[#8BF58D]"
@@ -137,7 +104,6 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Mobile drawer */}
       {mobileMenuOpen && (
         <motion.div
           initial={{ opacity: 0, y: -8 }}
@@ -162,18 +128,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           ))}
 
-          <div className="pt-3 border-t border-white/10 mt-1 flex flex-col gap-2.5">
-            <button
-              onClick={toggleTheme}
-              className="w-full py-2.5 px-3.5 rounded-xl border border-white/10 text-xs font-semibold text-[#F5F7F5] flex items-center justify-between bg-[#12161B]"
-            >
-              <span>Тема оформления:</span>
-              <span className="flex items-center gap-1.5 text-[#8BF58D]">
-                {isDarkTheme ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5 text-emerald-600" />}
-                <span>{isDarkTheme ? 'Тёмная' : 'Светлая'}</span>
-              </span>
-            </button>
-
+          <div className="pt-3 border-t border-white/10 mt-1">
             <button
               onClick={() => handleNavClick('tool')}
               className="w-full py-3 rounded-xl bg-[#8BF58D] text-[#080B0D] font-bold text-center flex items-center justify-center gap-2 shadow-glow-sm"

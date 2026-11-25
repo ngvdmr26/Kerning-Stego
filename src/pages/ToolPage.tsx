@@ -1,93 +1,108 @@
-import React, { useState, useRef } from 'react';
-import { 
-  Lock, 
-  Eye, 
-  ArrowRight, 
-  Copy, 
-  Check, 
-  RefreshCw, 
-  AlertCircle, 
-  CheckCircle2, 
-  FileCode, 
+﻿import React, { useRef, useState } from 'react';
+import {
+  Lock,
+  Eye,
+  ArrowRight,
+  Copy,
+  Check,
+  RefreshCw,
+  AlertCircle,
+  CheckCircle2,
+  FileCode,
   Binary,
   Layers,
-  Sparkles,
-  RotateCcw
+  RotateCcw,
+  MessageSquareText,
+  Download,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { motion } from 'framer-motion';
-import { encodeKerning, decodeKerning, capacityBits, BITS_PER_GAP, HEADER_BITS } from '../lib/kerningStego';
-import { StegoResult, DecodeResult } from '../lib/stegoTypes';
-import { ThemeImage } from '../components/ThemeImage';
+import {
+  encodeKerning,
+  decodeKerning,
+  encodeTextCarrier,
+  BITS_PER_GAP,
+  TEXT_BITS_PER_CHAR,
+  HEADER_BITS,
+} from '../lib/kerningStego';
+import { StegoResult, TextStegoResult, DecodeResult } from '../lib/stegoTypes';
 
-interface ToolPageProps {
-  isDarkTheme?: boolean;
-}
+type Carrier = 'text' | 'html';
 
-export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
+type EncodeOutput =
+  | { carrier: 'text'; res: TextStegoResult }
+  | { carrier: 'html'; res: StegoResult };
+
+const copyText = (value: string) => navigator.clipboard.writeText(value);
+
+export const ToolPage: React.FC = () => {
   const [mode, setMode] = useState<'encode' | 'decode'>('encode');
+  const [carrier, setCarrier] = useState<Carrier>('text');
 
-  // Encode state
   const [coverText, setCoverText] = useState(
     'Информационная безопасность — это состояние защищённости информации, при котором обеспечиваются её конфиденциальность, целостность и доступность. Защита данных требует комплексного подхода: организационных мер, контроля доступа и внимания к деталям, которые на первый взгляд кажутся незначительными.'
   );
   const [secretText, setSecretText] = useState('Секретная операция K-26');
-  const [encodeResult, setEncodeResult] = useState<StegoResult | null>(null);
-  const [copiedEncode, setCopiedEncode] = useState(false);
-  const [showInspector, setShowInspector] = useState(false);
+  const [output, setOutput] = useState<EncodeOutput | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [showGaps, setShowGaps] = useState(false);
   const [justEncoded, setJustEncoded] = useState(false);
 
-  // Decode state
   const [cipherInput, setCipherInput] = useState('');
   const [decodeResult, setDecodeResult] = useState<DecodeResult | null>(null);
   const [copiedDecode, setCopiedDecode] = useState(false);
   const [isDecoding, setIsDecoding] = useState(false);
 
-  // Refs for scrolling on mobile
   const resultCardRef = useRef<HTMLDivElement>(null);
   const decodeResultRef = useRef<HTMLDivElement>(null);
 
-  // Counts
-  const coverCharCount = Array.from(coverText).length;
-  const secretCharCount = Array.from(secretText).length;
-  const coverCapacity = capacityBits(coverCharCount);
-  const payloadBytesCapacity = Math.max(0, Math.floor((coverCapacity - HEADER_BITS) / 8));
+  const coverChars = Array.from(coverText).length;
   const secretBytes = new TextEncoder().encode(secretText.trim()).length;
   const requiredBits = HEADER_BITS + Math.max(0, secretBytes) * 8;
-  const requiredChars = Math.max(2, Math.ceil(requiredBits / BITS_PER_GAP) + 1);
-  const charsMissing = Math.max(0, requiredChars - coverCharCount);
+  const requiredChars =
+    carrier === 'html'
+      ? Math.max(2, Math.ceil(requiredBits / BITS_PER_GAP) + 1)
+      : Math.max(1, Math.ceil(requiredBits / TEXT_BITS_PER_CHAR));
+  const charsMissing = Math.max(0, requiredChars - coverChars);
+
+  const outputPayload =
+    output && output.res.success
+      ? output.carrier === 'text'
+        ? output.res.text
+        : output.res.containerHtml
+      : '';
 
   const handleEncode = () => {
     if (!coverText.trim()) {
-      alert('Пожалуйста, введите исходный открытый текст.');
+      alert('Введите текст, в котором будет спрятано сообщение.');
       return;
     }
     if (!secretText.trim()) {
-      alert('Пожалуйста, введите секретное сообщение для скрытия.');
+      alert('Введите секретное сообщение.');
       return;
     }
 
-    const res = encodeKerning(coverText, secretText);
-    setEncodeResult(res);
+    if (carrier === 'text') {
+      setOutput({ carrier: 'text', res: encodeTextCarrier(coverText, secretText) });
+    } else {
+      setOutput({ carrier: 'html', res: encodeKerning(coverText, secretText) });
+    }
 
-    if (res.success) {
-      setJustEncoded(true);
-      setTimeout(() => setJustEncoded(false), 2000);
+    setShowGaps(false);
+    setJustEncoded(true);
+    setTimeout(() => setJustEncoded(false), 2000);
 
-      // Trigger confetti
-      confetti({
-        particleCount: 40,
-        spread: 50,
-        origin: { y: 0.7 },
-        colors: ['#8BF58D', '#B4FFB4', '#5FE7C8'],
-      });
+    confetti({
+      particleCount: 36,
+      spread: 55,
+      origin: { y: 0.7 },
+      colors: ['#8BF58D', '#B4FFB4', '#5FE7C8'],
+    });
 
-      // Scroll to result on mobile if stacked
-      if (window.innerWidth < 1024 && resultCardRef.current) {
-        setTimeout(() => {
-          resultCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
-      }
+    if (window.innerWidth < 1024 && resultCardRef.current) {
+      setTimeout(() => {
+        resultCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
     }
   };
 
@@ -102,14 +117,13 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
 
       if (res.success) {
         confetti({
-          particleCount: 60,
+          particleCount: 50,
           spread: 70,
           origin: { y: 0.65 },
           colors: ['#8BF58D', '#B4FFB4', '#5FE7C8'],
         });
       }
 
-      // Scroll to decoded result on mobile
       if (window.innerWidth < 1024 && decodeResultRef.current) {
         setTimeout(() => {
           decodeResultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -120,23 +134,21 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
 
   const handleDecode = () => {
     if (!cipherInput.trim()) {
-      alert('Пожалуйста, вставьте контейнер в поле.');
+      alert('Вставьте сообщение или контейнер в поле.');
       return;
     }
     runDecode(cipherInput);
   };
 
   const handleTestInDecoder = () => {
-    if (encodeResult?.success) {
-      runDecode(encodeResult.containerHtml);
-    }
+    if (outputPayload) runDecode(outputPayload);
   };
 
-  const copyToClipboard = (text: string, type: 'encode' | 'decode') => {
-    navigator.clipboard.writeText(text);
+  const handleCopy = (value: string, type: 'encode' | 'decode') => {
+    copyText(value);
     if (type === 'encode') {
-      setCopiedEncode(true);
-      setTimeout(() => setCopiedEncode(false), 2000);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } else {
       setCopiedDecode(true);
       setTimeout(() => setCopiedDecode(false), 2000);
@@ -155,44 +167,49 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
     URL.revokeObjectURL(url);
   };
 
+  const carrierOptions: { id: Carrier; title: string; hint: string; icon: typeof FileCode }[] = [
+    {
+      id: 'text',
+      title: 'Обычный текст',
+      hint: 'Невидимые маркеры. Копируется в мессенджер и файл.',
+      icon: MessageSquareText,
+    },
+    {
+      id: 'html',
+      title: 'Кёрнинг (HTML)',
+      hint: 'Биты в интервалах. Живёт только в разметке.',
+      icon: FileCode,
+    },
+  ];
+
   return (
-    <div className="min-h-[calc(100vh-80px)] py-6 sm:py-10 lg:py-12">
+    <div className="min-h-[calc(100vh-80px)] py-6 sm:py-10 lg:py-14">
       <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8">
-        
-        {/* Top Header & 3D Floating Lock Tile */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 mb-6 sm:mb-10">
-          <div>
-            <h1 className="font-display text-2xl sm:text-4xl lg:text-5xl font-semibold text-[#F5F7F5] tracking-tight mb-1 sm:mb-3">
-              Инструмент <br className="hidden sm:inline" />
-              для скрытых сообщений
+        {/* ================= HEADER ================= */}
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-6 sm:mb-10">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 text-[9px] sm:text-[10px] font-mono uppercase tracking-[0.2em] text-[#8BF58D] mb-3">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#8BF58D] animate-pulse" />
+              инструмент
+            </div>
+            <h1 className="font-display text-[28px] sm:text-4xl lg:text-[52px] font-semibold text-[#F5F7F5] leading-[1.08] mb-2 sm:mb-3">
+              Спрячьте сообщение
+              <br />
+              <span className="text-gradient">в обычном тексте</span>
             </h1>
-            <p className="hidden sm:block text-[#92999F] text-xs sm:text-base max-w-xl leading-relaxed">
-              Введите текст и получите сообщение, которое невозможно заметить при обычном чтении.
+            <p className="text-[#92999F] text-xs sm:text-base leading-relaxed">
+              Буквы остаются буквами. Меняется только то, что замечает машина.
             </p>
           </div>
 
-          {/* Right Floating 3D Lock Element */}
-          <div className="hidden lg:flex items-center justify-center">
-            <div className="relative group">
-              <div className="absolute inset-0 rounded-2xl bg-[#8BF58D]/20 blur-xl opacity-60 group-hover:opacity-100 transition-opacity" />
-              <div className="relative w-24 h-24 lg:w-28 lg:h-28 rounded-3xl bg-[#171C22]/90 border border-white/[0.14] shadow-2xl backdrop-blur-xl flex items-center justify-center overflow-hidden">
-                <ThemeImage
-                  dark="/assets/tool-lock-tile.jpg"
-                  light="/assets/tool-lock-tile-light.jpg"
-                  alt="3D Lock Tile"
-                  isDarkTheme={isDarkTheme}
-                  className="w-full h-full"
-                  imageClassName="transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <Lock className="w-8 h-8 lg:w-10 lg:h-10 text-[#8BF58D] drop-shadow-[0_0_12px_rgba(139,245,141,0.6)]" />
-                </div>
-              </div>
-            </div>
+          <div className="hidden lg:flex flex-col gap-2 text-[10px] font-mono text-[#62686F] border-l border-white/[0.08] pl-6">
+            <span>2 бита · зазор кёрнинга</span>
+            <span>8 бит · символ открытого текста</span>
+            <span className="text-[#8BF58D]">CRC16 · проверка целостности</span>
           </div>
         </div>
 
-        {/* Mode Switcher Tabs - full width on mobile */}
+        {/* ================= MODE SWITCH ================= */}
         <div className="w-full sm:w-fit mb-6 sm:mb-8 bg-[#12161B] p-1 rounded-2xl border border-white/[0.08] grid grid-cols-2 sm:flex sm:items-center gap-1">
           <button
             onClick={() => setMode('encode')}
@@ -229,24 +246,27 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
           </button>
         </div>
 
-        {/* ================= MODE: ENCODE ================= */}
+        {/* ================= ENCODE ================= */}
         {mode === 'encode' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-8 items-start">
-            
-            {/* Left Card: Input Form */}
             <div className="glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-7 flex flex-col gap-5">
-              
-              {/* Field 1: Исходный текст */}
+              {/* Cover text */}
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#F5F7F5]">
-                    <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#8BF58D]" />
-                    <span>Исходный текст</span>
-                  </label>
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between mb-2 gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="font-mono text-[10px] text-[#8BF58D]/70">01</span>
+                    <span className="font-display text-[11px] sm:text-sm text-[#F5F7F5] truncate">
+                      Открытый текст
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     <button
                       type="button"
-                      onClick={() => setCoverText('Информационная безопасность — это состояние защищённости информации, при котором обеспечиваются её конфиденциальность, целостность и доступность. Защита данных требует комплексного подхода: организационных мер, контроля доступа и внимания к деталям, которые на первый взгляд кажутся незначительными.')}
+                      onClick={() =>
+                        setCoverText(
+                          'Информационная безопасность — это состояние защищённости информации, при котором обеспечиваются её конфиденциальность, целостность и доступность. Защита данных требует комплексного подхода: организационных мер, контроля доступа и внимания к деталям, которые на первый взгляд кажутся незначительными.'
+                        )
+                      }
                       className="text-[10px] sm:text-xs text-[#8BF58D] hover:underline cursor-pointer"
                     >
                       Пример
@@ -258,15 +278,13 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
                     >
                       Сброс
                     </button>
-                    <span className="text-[11px] sm:text-xs text-[#92999F] font-mono">
-                      {coverCharCount} симв.
-                    </span>
                   </div>
                 </div>
+
                 <textarea
                   value={coverText}
                   onChange={(e) => setCoverText(e.target.value)}
-                  placeholder="Введите открытый текст, в котором будет скрыто сообщение..."
+                  placeholder="Введите текст, в котором будет скрыто сообщение..."
                   maxLength={4000}
                   rows={4}
                   className="w-full rounded-xl sm:rounded-2xl bg-[#101418] border border-white/[0.1] p-3 sm:p-4 text-base sm:text-sm text-[#F5F7F5] placeholder-[#62686F] focus:outline-none focus:border-[#8BF58D]/60 focus:ring-1 focus:ring-[#8BF58D]/30 transition-all resize-y min-h-[95px] leading-relaxed"
@@ -277,10 +295,10 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
                     <span className={charsMissing > 0 ? 'text-amber-400' : 'text-[#8BF58D]'}>
                       {charsMissing > 0
                         ? `Нужно ещё ${charsMissing} симв. для текущего сообщения`
-                        : 'Объёма текста достаточно для сообщения'}
+                        : 'Объёма текста достаточно'}
                     </span>
                     <span className="font-mono text-[#92999F]">
-                      {coverCharCount} / {requiredChars} симв.
+                      {coverChars} / {requiredChars} симв.
                     </span>
                   </div>
                   <div className="h-1 rounded-full bg-white/[0.07] overflow-hidden">
@@ -288,20 +306,22 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
                       className={`h-full rounded-full transition-all duration-500 ${
                         charsMissing > 0 ? 'bg-amber-400' : 'bg-[#8BF58D]'
                       }`}
-                      style={{ width: `${Math.min(100, (coverCharCount / requiredChars) * 100)}%` }}
+                      style={{ width: `${Math.min(100, (coverChars / requiredChars) * 100)}%` }}
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Field 2: Скрытое сообщение */}
+              {/* Secret */}
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#F5F7F5]">
-                    <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#8BF58D]" />
-                    <span>Скрытое сообщение</span>
-                  </label>
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between mb-2 gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="font-mono text-[10px] text-[#8BF58D]/70">02</span>
+                    <span className="font-display text-[11px] sm:text-sm text-[#F5F7F5] truncate">
+                      Скрытое сообщение
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     <button
                       type="button"
                       onClick={() => setSecretText('Секретная операция K-26')}
@@ -316,9 +336,6 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
                     >
                       Сброс
                     </button>
-                    <span className="text-[11px] sm:text-xs text-[#92999F] font-mono">
-                      {secretCharCount} симв.
-                    </span>
                   </div>
                 </div>
                 <textarea
@@ -331,165 +348,205 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
                 />
               </div>
 
-              {/* Dynamic Capacity Info Pill */}
-              <div className="bg-[#101418] p-3 sm:p-3.5 rounded-xl border border-white/[0.06] flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] sm:text-xs">
-                <span className="text-[#92999F] flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-[#8BF58D]" />
-                  <span>Ёмкость текста:</span>
-                </span>
-                <span className="font-mono text-[#8BF58D] font-medium">
-                  {coverCapacity} бит · до {payloadBytesCapacity} байт сообщения
-                </span>
+              {/* Carrier */}
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="font-mono text-[10px] text-[#8BF58D]/70">03</span>
+                  <span className="font-display text-[11px] sm:text-sm text-[#F5F7F5]">Носитель</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {carrierOptions.map((option) => {
+                    const Icon = option.icon;
+                    const active = carrier === option.id;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => setCarrier(option.id)}
+                        className={`relative text-left rounded-xl border p-3 transition-all cursor-pointer ${
+                          active
+                            ? 'border-[#8BF58D]/50 bg-[#8BF58D]/[0.07] shadow-[0_0_20px_rgba(139,245,141,0.12)]'
+                            : 'border-white/[0.08] bg-[#101418] hover:border-white/20'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <Icon className={`w-3.5 h-3.5 ${active ? 'text-[#8BF58D]' : 'text-[#62686F]'}`} />
+                          <span className={`text-[11px] sm:text-xs font-semibold ${active ? 'text-[#F5F7F5]' : 'text-[#92999F]'}`}>
+                            {option.title}
+                          </span>
+                        </div>
+                        <p className="text-[10px] leading-snug text-[#62686F]">{option.hint}</p>
+                        {active && (
+                          <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[#8BF58D] shadow-[0_0_6px_#8BF58D]" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* Submit Button */}
               <button
                 type="button"
                 onClick={handleEncode}
-                className="w-full py-3.5 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-sm sm:text-base bg-[#8BF58D] text-[#080B0D] hover:bg-[#A4FBA6] transition-all duration-200 hover:shadow-[0_0_25px_rgba(139,245,141,0.4)] flex items-center justify-center gap-2 transform active:scale-[0.98] cursor-pointer"
+                className="btn-shine w-full py-3.5 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-sm sm:text-base bg-[#8BF58D] text-[#080B0D] hover:bg-[#A4FBA6] transition-all duration-200 hover:shadow-[0_0_30px_rgba(139,245,141,0.4)] flex items-center justify-center gap-2 transform active:scale-[0.98] cursor-pointer"
               >
                 <span>Скрыть сообщение</span>
                 <ArrowRight className="w-4 h-4 stroke-[2.5]" />
               </button>
             </div>
 
-            {/* Right Card: Result Box */}
-            <div 
+            {/* Result */}
+            <div
               ref={resultCardRef}
               className={`glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-7 flex flex-col justify-between min-h-[420px] transition-all duration-300 ${
-                justEncoded ? 'border-[#8BF58D] shadow-[0_0_30px_rgba(139,245,141,0.25)]' : ''
+                justEncoded ? 'border-[#8BF58D] shadow-[0_0_30px_rgba(139,245,141,0.2)]' : ''
               }`}
             >
               <div>
-                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2">
                   <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-[#F5F7F5]">
                     <Eye className="w-4 h-4 text-[#8BF58D]" />
-                    <span>Результат</span>
+                    <span className="font-display">Результат</span>
                   </div>
 
-                  {encodeResult?.success && (
-                    <div className="flex items-center gap-1 text-[11px] text-[#8BF58D] bg-[#8BF58D]/10 px-2.5 py-1 rounded-full border border-[#8BF58D]/20 animate-fade-in">
+                  {output?.res.success && (
+                    <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-[#8BF58D] bg-[#8BF58D]/10 px-2.5 py-1 rounded-full border border-[#8BF58D]/20">
                       <CheckCircle2 className="w-3 h-3" />
-                      <span>Готово к копированию</span>
+                      <span className="whitespace-nowrap">Готово</span>
                     </div>
                   )}
                 </div>
 
-                {/* Display Output Box */}
-                <div className="rounded-xl sm:rounded-2xl bg-[#101418] border border-white/[0.1] p-3.5 sm:p-5 min-h-[180px] sm:min-h-[220px] text-xs sm:text-sm leading-relaxed relative text-[#F5F7F5]">
-                  {encodeResult?.success ? (
-                    <div>
-                      {showInspector ? (
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="text-[11px] sm:text-xs text-[#8BF58D] font-mono flex items-center gap-1.5">
-                              <Binary className="w-3.5 h-3.5" />
-                              <span>Разметка зазоров</span>
+                <div className="rounded-xl sm:rounded-2xl bg-[#101418] border border-white/[0.1] p-3.5 sm:p-5 min-h-[190px] sm:min-h-[230px] text-xs sm:text-sm leading-relaxed relative text-[#F5F7F5]">
+                  {output ? (
+                    output.res.success ? (
+                      <div>
+                        {showGaps && output.carrier === 'html' ? (
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="text-[11px] sm:text-xs text-[#8BF58D] font-mono flex items-center gap-1.5">
+                                <Binary className="w-3.5 h-3.5" />
+                                <span>Разметка зазоров</span>
+                              </div>
+                              <span className="text-[10px] font-mono text-[#62686F]">em</span>
                             </div>
-                            <span className="text-[10px] font-mono text-[#62686F]">em</span>
-                          </div>
 
-                          <div className="bg-[#080B0D] p-3 rounded-xl border border-white/10 max-h-[240px] overflow-auto">
-                            <div className="flex flex-wrap items-end gap-y-3">
-                              {encodeResult.gaps.map((gap, idx) => (
-                                <span key={idx} className="inline-flex items-end">
-                                  <span className="font-serif text-base sm:text-lg leading-none text-[#F5F7F5] whitespace-pre">
-                                    {gap.char === ' ' ? '\u00A0' : gap.char === '\n' ? '↵' : gap.char}
-                                  </span>
-                                  {idx < encodeResult.gaps.length - 1 && (
-                                    <span className="flex flex-col items-center mx-0.5 sm:mx-1">
-                                      <span
-                                        className={`w-px h-3.5 sm:h-4 ${
-                                          gap.level > 0
-                                            ? 'bg-[#8BF58D] shadow-[0_0_6px_rgba(139,245,141,0.7)]'
-                                            : 'bg-white/20'
-                                        }`}
-                                      />
-                                      <span
-                                        className={`mt-1 text-[8px] sm:text-[9px] leading-none tabular-nums ${
-                                          gap.level > 0 ? 'text-[#8BF58D]' : 'text-[#62686F]'
-                                        }`}
-                                      >
-                                        {gap.spacingEm.toFixed(2)}
-                                      </span>
+                            <div className="bg-[#080B0D] p-3 rounded-xl border border-white/10 max-h-[240px] overflow-auto">
+                              <div className="flex flex-wrap items-end gap-y-3">
+                                {output.res.gaps.map((gap, idx) => (
+                                  <span key={idx} className="inline-flex items-end">
+                                    <span className="font-serif text-base sm:text-lg leading-none text-[#F5F7F5] whitespace-pre">
+                                      {gap.char === ' ' ? '\u00A0' : gap.char === '\n' ? '↵' : gap.char}
                                     </span>
-                                  )}
-                                </span>
-                              ))}
+                                    {idx < output.res.gaps.length - 1 && (
+                                      <span className="flex flex-col items-center mx-0.5 sm:mx-1">
+                                        <span
+                                          className={`w-px h-3.5 sm:h-4 ${
+                                            gap.level > 0
+                                              ? 'bg-[#8BF58D] shadow-[0_0_6px_rgba(139,245,141,0.7)]'
+                                              : 'bg-white/20'
+                                          }`}
+                                        />
+                                        <span
+                                          className={`mt-1 text-[8px] sm:text-[9px] leading-none tabular-nums ${
+                                            gap.level > 0 ? 'text-[#8BF58D]' : 'text-[#62686F]'
+                                          }`}
+                                        >
+                                          {gap.spacingEm.toFixed(2)}
+                                        </span>
+                                      </span>
+                                    )}
+                                  </span>
+                                ))}
+                              </div>
                             </div>
-                          </div>
 
-                          <p className="text-[10px] sm:text-[11px] text-[#92999F] leading-relaxed">
-                            Чёрточка стоит между буквами, число под ней — зазор в em. 0.00 — обычный,
-                            0.02–0.06 — расширенные, именно они несут биты.
-                          </p>
-                        </div>
-                      ) : (
-                        <div
-                          className="whitespace-pre-wrap select-all break-words"
-                          dangerouslySetInnerHTML={{ __html: encodeResult.containerHtml }}
-                        />
-                      )}
-                    </div>
-                  ) : encodeResult ? (
-                    <div className="text-red-400 text-xs sm:text-sm flex items-start gap-2.5 p-3 rounded-xl bg-red-500/10 border border-red-500/20">
-                      <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                      <p>{encodeResult.error}</p>
-                    </div>
+                            <p className="text-[10px] sm:text-[11px] text-[#92999F] leading-relaxed">
+                              Чёрточка — между буквами, число под ней — зазор в em. Расширенные
+                              зазоры несут биты.
+                            </p>
+                          </div>
+                        ) : output.carrier === 'html' ? (
+                          <div
+                            className="whitespace-pre-wrap select-all break-words"
+                            dangerouslySetInnerHTML={{ __html: output.res.containerHtml }}
+                          />
+                        ) : (
+                          <div className="whitespace-pre-wrap select-all break-words">
+                            {output.res.text}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-red-400 text-xs sm:text-sm flex items-start gap-2.5 p-3 rounded-xl bg-red-500/10 border border-red-500/20">
+                        <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                        <p>{output.res.error}</p>
+                      </div>
+                    )
                   ) : (
-                    <p className="text-[#62686F] italic">
-                      Здесь появится текст с внедрённым сообщением...
-                    </p>
+                    <div className="h-full flex flex-col items-center justify-center gap-3 text-center py-8">
+                      <div className="font-display text-3xl text-[#8BF58D]/25">Aa</div>
+                      <p className="text-[#62686F] italic max-w-[240px] text-[11px] sm:text-xs">
+                        Здесь появится носитель: обычный текст или HTML с интервалами.
+                      </p>
+                    </div>
                   )}
                 </div>
 
-                {/* Stego Specs & Toggles */}
-                {encodeResult?.success && (
+                {output?.res.success && (
                   <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] sm:text-xs text-[#92999F]">
-                    <div className="flex items-center gap-3">
-                      <span>Внедрено: <strong className="text-[#F5F7F5]">{encodeResult.bitsUsed} бит</strong></span>
-                      <span>CRC16: <strong className="text-[#8BF58D] font-mono">0x{encodeResult.checksum.toString(16).toUpperCase()}</strong></span>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                      <span>
+                        Биты: <strong className="text-[#F5F7F5] font-mono">{output.res.bitsUsed}</strong>
+                      </span>
+                      <span>
+                        CRC16:{' '}
+                        <strong className="text-[#8BF58D] font-mono">
+                          0x{output.res.checksum.toString(16).toUpperCase()}
+                        </strong>
+                      </span>
+                      <span className="text-[#62686F]">
+                        {output.carrier === 'text' ? 'невидимые маркеры' : 'интервалы'}
+                      </span>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => setShowInspector(!showInspector)}
-                      className="text-left text-[#8BF58D] hover:underline flex items-center gap-1 py-1 cursor-pointer"
-                    >
-                      <Layers className="w-3 h-3" />
-                      <span>{showInspector ? 'Скрыть инспектор' : 'Показать инспектор кёрнинга'}</span>
-                    </button>
+                    {output.carrier === 'html' && (
+                      <button
+                        type="button"
+                        onClick={() => setShowGaps(!showGaps)}
+                        className="text-left text-[#8BF58D] hover:underline flex items-center gap-1 py-1 cursor-pointer"
+                      >
+                        <Layers className="w-3 h-3" />
+                        <span>{showGaps ? 'Скрыть зазоры' : 'Показать зазоры'}</span>
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
 
-              {/* Action Buttons Row */}
               <div className="mt-5 sm:mt-8 pt-4 sm:pt-6 border-t border-white/[0.08]">
                 <p className="text-[10px] sm:text-[11px] text-[#62686F] leading-relaxed mb-3">
-                  Сообщение живёт только в межбуквенных интервалах. В буфер обмена попадает
-                  HTML-контейнер — именно его читает декодер.
+                  {carrier === 'text'
+                    ? 'Текст с невидимыми маркерами можно копировать в мессенджер — сообщение останется внутри.'
+                    : 'Кёрнинг существует только в разметке. Копируйте HTML-контейнер целиком или скачивайте файл.'}
                 </p>
 
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2.5">
-                  {/* Primary: прогнать контейнер через декодер */}
                   <button
-                    disabled={!encodeResult?.success}
+                    disabled={!output?.res.success}
                     onClick={handleTestInDecoder}
                     className="order-1 sm:order-3 sm:ml-auto w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-[#080B0D] bg-[#8BF58D] hover:bg-[#A4FBA6] transition-all hover:shadow-[0_0_20px_rgba(139,245,141,0.35)] active:scale-95 disabled:opacity-40 cursor-pointer"
-                    title="Отправить контейнер в декодер и сразу увидеть скрытый текст"
                   >
                     <Eye className="w-4 h-4" />
                     <span>Проверить в декодере</span>
                   </button>
 
-                  {/* Copy container */}
                   <button
-                    disabled={!encodeResult?.success}
-                    onClick={() => encodeResult && copyToClipboard(encodeResult.containerHtml, 'encode')}
+                    disabled={!output?.res.success}
+                    onClick={() => outputPayload && handleCopy(outputPayload, 'encode')}
                     className="order-2 w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-[#F5F7F5] bg-[#101418] border border-white/[0.14] hover:bg-white/[0.06] hover:border-white/30 transition-all active:scale-95 disabled:opacity-40 cursor-pointer shadow-sm"
-                    title="Копирует HTML-контейнер со всеми интервалами"
                   >
-                    {copiedEncode ? (
+                    {copied ? (
                       <>
                         <Check className="w-4 h-4 text-[#8BF58D]" />
                         <span className="text-[#8BF58D]">Скопировано!</span>
@@ -497,41 +554,45 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
                     ) : (
                       <>
                         <Copy className="w-4 h-4 text-[#92999F]" />
-                        <span>Копировать HTML</span>
+                        <span>{carrier === 'text' ? 'Копировать текст' : 'Копировать HTML'}</span>
                       </>
                     )}
                   </button>
 
-                  {/* Download HTML: интервалы сохраняются в файле */}
                   <button
-                    disabled={!encodeResult?.success}
-                    onClick={() => encodeResult && downloadFile(encodeResult.documentHtml, 'kerning-stego-doc.html', 'text/html')}
+                    disabled={!output?.res.success}
+                    onClick={() =>
+                      output &&
+                      output.res.success &&
+                      downloadFile(
+                        outputPayload,
+                        carrier === 'text' ? 'stego-message.txt' : 'kerning-stego.html',
+                        carrier === 'text' ? 'text/plain' : 'text/html'
+                      )
+                    }
                     className="order-3 sm:order-1 w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-medium text-[#92999F] hover:text-[#F5F7F5] bg-[#101418] border border-white/[0.1] hover:border-white/20 transition-all disabled:opacity-40 cursor-pointer"
-                    title="Скачать HTML-документ: межбуквенные интервалы сохранятся"
                   >
-                    <FileCode className="w-3.5 h-3.5 text-[#8BF58D]" />
-                    <span>Скачать HTML</span>
+                    <Download className="w-3.5 h-3.5 text-[#8BF58D]" />
+                    <span>{carrier === 'text' ? 'Скачать TXT' : 'Скачать HTML'}</span>
                   </button>
                 </div>
               </div>
-
             </div>
-
           </div>
         )}
 
-        {/* ================= MODE: DECODE ================= */}
+        {/* ================= DECODE ================= */}
         {mode === 'decode' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-8 items-start">
-            
-            {/* Left Card: Cipher Input */}
             <div className="glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-7 flex flex-col gap-5">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#F5F7F5]">
-                    <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#8BF58D]" />
-                    <span>Текст со скрытым сообщением</span>
-                  </label>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[10px] text-[#8BF58D]/70">01</span>
+                    <span className="font-display text-[11px] sm:text-sm text-[#F5F7F5]">
+                      Что читаем
+                    </span>
+                  </div>
                   {cipherInput && (
                     <button
                       type="button"
@@ -549,9 +610,9 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
                 <textarea
                   value={cipherInput}
                   onChange={(e) => setCipherInput(e.target.value)}
-                  placeholder="Вставьте HTML-контейнер целиком — со спанами и letter-spacing..."
-                  rows={7}
-                  className="w-full rounded-xl sm:rounded-2xl bg-[#101418] border border-white/[0.1] p-3 sm:p-4 text-base sm:text-sm text-[#F5F7F5] placeholder-[#62686F] focus:outline-none focus:border-[#8BF58D]/60 focus:ring-1 focus:ring-[#8BF58D]/30 transition-all resize-y min-h-[140px] leading-relaxed"
+                  placeholder="Вставьте текст с невидимыми маркерами или HTML-контейнер с интервалами..."
+                  rows={8}
+                  className="w-full rounded-xl sm:rounded-2xl bg-[#101418] border border-white/[0.1] p-3 sm:p-4 text-base sm:text-sm text-[#F5F7F5] placeholder-[#62686F] focus:outline-none focus:border-[#8BF58D]/60 focus:ring-1 focus:ring-[#8BF58D]/30 transition-all resize-y min-h-[150px] leading-relaxed"
                 />
               </div>
 
@@ -571,12 +632,12 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
                   type="button"
                   onClick={handleDecode}
                   disabled={isDecoding || !cipherInput.trim()}
-                  className="w-full sm:w-auto px-6 py-3.5 rounded-xl sm:rounded-2xl font-bold text-sm bg-[#8BF58D] text-[#080B0D] hover:bg-[#A4FBA6] transition-all hover:shadow-[0_0_20px_rgba(139,245,141,0.4)] flex items-center justify-center gap-2 disabled:opacity-40 cursor-pointer"
+                  className="btn-shine w-full sm:w-auto px-6 py-3.5 rounded-xl sm:rounded-2xl font-bold text-sm bg-[#8BF58D] text-[#080B0D] hover:bg-[#A4FBA6] transition-all hover:shadow-[0_0_20px_rgba(139,245,141,0.4)] flex items-center justify-center gap-2 disabled:opacity-40 cursor-pointer"
                 >
                   {isDecoding ? (
                     <>
                       <RefreshCw className="w-4 h-4 animate-spin" />
-                      <span>Анализ текста...</span>
+                      <span>Анализ...</span>
                     </>
                   ) : (
                     <>
@@ -588,8 +649,7 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
               </div>
             </div>
 
-            {/* Right Card: Decoded Output */}
-            <div 
+            <div
               ref={decodeResultRef}
               className="glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-7 flex flex-col justify-between min-h-[380px]"
             >
@@ -597,15 +657,17 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
                 <div className="flex items-center justify-between mb-3 sm:mb-4">
                   <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-[#F5F7F5]">
                     <CheckCircle2 className="w-4 h-4 text-[#8BF58D]" />
-                    <span>Извлечённое послание</span>
+                    <span className="font-display">Послание</span>
                   </div>
 
                   {decodeResult && (
-                    <span className={`text-[11px] px-2.5 py-0.5 rounded-full border ${
-                      decodeResult.success 
-                        ? 'bg-[#8BF58D]/10 text-[#8BF58D] border-[#8BF58D]/20' 
-                        : 'bg-red-500/10 text-red-400 border-red-500/20'
-                    }`}>
+                    <span
+                      className={`text-[11px] px-2.5 py-0.5 rounded-full border ${
+                        decodeResult.success
+                          ? 'bg-[#8BF58D]/10 text-[#8BF58D] border-[#8BF58D]/20'
+                          : 'bg-red-500/10 text-red-400 border-red-500/20'
+                      }`}
+                    >
                       {decodeResult.success ? 'Целостность подтверждена' : 'Ошибка'}
                     </span>
                   )}
@@ -615,13 +677,30 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
                   {decodeResult ? (
                     decodeResult.success ? (
                       <div className="space-y-3 sm:space-y-4">
-                        <div className="text-base sm:text-lg font-semibold text-[#8BF58D] bg-[#8BF58D]/5 p-3.5 sm:p-4 rounded-xl border border-[#8BF58D]/20 break-words">
+                        <div className="font-display text-base sm:text-lg font-medium text-[#8BF58D] bg-[#8BF58D]/5 p-3.5 sm:p-4 rounded-xl border border-[#8BF58D]/20 break-words">
                           «{decodeResult.message}»
                         </div>
                         <div className="text-[11px] sm:text-xs text-[#92999F] space-y-1 pt-1">
-                          <div>Метод: <span className="text-[#F5F7F5] font-mono">кёрнинг (letter-spacing)</span></div>
-                          <div>Длина: <span className="text-[#F5F7F5]">{decodeResult.message.length} символов</span></div>
-                          <div>CRC16: <span className="text-[#8BF58D] font-mono">{decodeResult.checksumValid ? 'ВАЛИДНА (совпала)' : 'НЕ СОВПАЛА'}</span></div>
+                          <div>
+                            Носитель:{' '}
+                            <span className="text-[#F5F7F5] font-mono">
+                              {decodeResult.detectionMethod === 'text-unicode'
+                                ? 'текст · невидимые маркеры'
+                                : 'кёрнинг · letter-spacing'}
+                            </span>
+                          </div>
+                          <div>
+                            Длина:{' '}
+                            <span className="text-[#F5F7F5]">
+                              {decodeResult.message.length} символов
+                            </span>
+                          </div>
+                          <div>
+                            CRC16:{' '}
+                            <span className="text-[#8BF58D] font-mono">
+                              {decodeResult.checksumValid ? 'ВАЛИДНА' : 'НЕ СОВПАЛА'}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     ) : (
@@ -634,18 +713,20 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
                       </div>
                     )
                   ) : (
-                    <p className="text-[#62686F] italic">
-                      Вставьте зашифрованный текст слева и нажмите «Извлечь сообщение»...
-                    </p>
+                    <div className="h-full flex flex-col items-center justify-center gap-3 text-center py-8">
+                      <div className="font-display text-3xl text-[#8BF58D]/25">01</div>
+                      <p className="text-[#62686F] italic max-w-[260px] text-[11px] sm:text-xs">
+                        Вставьте носитель слева — декодер сам определит, где спрятаны биты.
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="mt-5 sm:mt-8 pt-4 sm:pt-6 border-t border-white/[0.08] flex items-center justify-end">
                 <button
                   disabled={!decodeResult?.success}
-                  onClick={() => decodeResult?.message && copyToClipboard(decodeResult.message, 'decode')}
+                  onClick={() => decodeResult?.message && handleCopy(decodeResult.message, 'decode')}
                   className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-[#F5F7F5] bg-[#101418] border border-white/[0.14] hover:bg-white/[0.06] hover:border-white/30 transition-all active:scale-95 disabled:opacity-40 cursor-pointer shadow-sm"
                 >
                   {copiedDecode ? (
@@ -656,17 +737,14 @@ export const ToolPage: React.FC<ToolPageProps> = ({ isDarkTheme = true }) => {
                   ) : (
                     <>
                       <Copy className="w-4 h-4 text-[#92999F]" />
-                      <span>Копировать результат</span>
+                      <span>Копировать сообщение</span>
                     </>
                   )}
                 </button>
               </div>
-
             </div>
-
           </div>
         )}
-
       </div>
     </div>
   );
