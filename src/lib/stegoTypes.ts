@@ -40,7 +40,7 @@ export interface DecodeResult {
   binaryBits: string;
   extractedBitsCount: number;
   checksumValid: boolean;
-  detectionMethod: 'kerning-html' | 'text-unicode' | 'none';
+  detectionMethod: 'kerning-html' | 'text-unicode' | 'docx-kerning' | 'none';
   error?: string;
   diagnostics?: {
     coverCharacters: number;

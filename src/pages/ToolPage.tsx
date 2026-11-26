@@ -14,6 +14,7 @@ import {
   RotateCcw,
   MessageSquareText,
   Download,
+  Upload,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { motion } from 'framer-motion';
@@ -26,6 +27,7 @@ import {
   HEADER_BITS,
 } from '../lib/kerningStego';
 import { StegoResult, TextStegoResult, DecodeResult } from '../lib/stegoTypes';
+import { buildDocxBytes, DOCX_MIME, decodeDocx } from '../lib/docx';
 
 type Carrier = 'text' | 'html';
 
@@ -167,6 +169,60 @@ export const ToolPage: React.FC = () => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  };
+
+  const downloadBlob = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadDocx = () => {
+    if (!coverText.trim() || !secretText.trim()) {
+      alert('Сначала заполните открытый текст и скрытое сообщение.');
+      return;
+    }
+    const res = encodeKerning(coverText, secretText);
+    if (!res.success) {
+      alert(res.error || 'Не удалось собрать DOCX: не хватает ёмкости текста.');
+      return;
+    }
+    const bytes = buildDocxBytes(res.gaps);
+    const copy = new Uint8Array(bytes.byteLength);
+    copy.set(bytes);
+    downloadBlob(new Blob([copy], { type: DOCX_MIME }), 'kerning-stego.docx');
+  };
+
+  const handleDocxUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    setIsDecoding(true);
+    try {
+      const result = await decodeDocx(await file.arrayBuffer());
+      setDecodeResult(result);
+      if (result.success) {
+        confetti({
+          particleCount: 50,
+          spread: 70,
+          origin: { y: 0.65 },
+          colors: ['#8BF58D', '#B4FFB4', '#5FE7C8'],
+        });
+      }
+    } finally {
+      setIsDecoding(false);
+      if (window.innerWidth < 1024 && decodeResultRef.current) {
+        setTimeout(() => {
+          decodeResultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      }
+    }
   };
 
   const carrierOptions: { id: Carrier; title: string; hint: string; icon: typeof FileCode }[] = [
@@ -548,7 +604,7 @@ export const ToolPage: React.FC = () => {
                   <button
                     disabled={!output?.res.success}
                     onClick={handleTestInDecoder}
-                    className="order-1 sm:order-3 sm:ml-auto w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-[#080B0D] bg-[#8BF58D] hover:bg-[#A4FBA6] transition-all hover:shadow-[0_0_20px_rgba(139,245,141,0.35)] active:scale-95 disabled:opacity-40 cursor-pointer"
+                    className="order-1 sm:order-5 sm:ml-auto w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-[#080B0D] bg-[#8BF58D] hover:bg-[#A4FBA6] transition-all hover:shadow-[0_0_20px_rgba(139,245,141,0.35)] active:scale-95 disabled:opacity-40 cursor-pointer"
                   >
                     <Eye className="w-4 h-4" />
                     <span>Проверить в декодере</span>
@@ -557,7 +613,7 @@ export const ToolPage: React.FC = () => {
                   <button
                     disabled={!output?.res.success}
                     onClick={() => outputPayload && handleCopy(outputPayload, 'encode')}
-                    className="order-2 w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-[#F5F7F5] bg-[#101418] border border-white/[0.14] hover:bg-white/[0.06] hover:border-white/30 transition-all active:scale-95 disabled:opacity-40 cursor-pointer shadow-sm"
+                    className="order-2 sm:order-4 w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-[#F5F7F5] bg-[#101418] border border-white/[0.14] hover:bg-white/[0.06] hover:border-white/30 transition-all active:scale-95 disabled:opacity-40 cursor-pointer shadow-sm"
                   >
                     {copied ? (
                       <>
@@ -587,6 +643,16 @@ export const ToolPage: React.FC = () => {
                   >
                     <Download className="w-3.5 h-3.5 text-[#8BF58D]" />
                     <span>{carrier === 'text' ? 'Скачать TXT' : 'Скачать HTML'}</span>
+                  </button>
+
+                  <button
+                    disabled={!output?.res.success}
+                    onClick={handleDownloadDocx}
+                    className="order-4 sm:order-2 w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-medium text-[#92999F] hover:text-[#F5F7F5] bg-[#101418] border border-white/[0.1] hover:border-white/20 transition-all disabled:opacity-40 cursor-pointer"
+                    title="Скачать DOCX: Times New Roman 14, интервалы кёрнинга внутри"
+                  >
+                    <FileCode className="w-3.5 h-3.5 text-[#8BF58D]" />
+                    <span>Скачать DOCX</span>
                   </button>
                 </div>
               </div>
@@ -627,6 +693,20 @@ export const ToolPage: React.FC = () => {
                   rows={8}
                   className="w-full rounded-xl sm:rounded-2xl bg-[#101418] border border-white/[0.1] p-3 sm:p-4 text-base sm:text-sm text-[#F5F7F5] placeholder-[#62686F] focus:outline-none focus:border-[#8BF58D]/60 focus:ring-1 focus:ring-[#8BF58D]/30 transition-all resize-y min-h-[150px] leading-relaxed"
                 />
+              </div>
+
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                <label className="inline-flex items-center gap-2 rounded-xl border border-white/[0.12] bg-[#101418] px-3 py-2 text-xs text-[#92999F] hover:text-[#F5F7F5] hover:border-white/20 transition-colors cursor-pointer">
+                  <Upload className="w-3.5 h-3.5 text-[#8BF58D]" />
+                  <span>Загрузить .docx</span>
+                  <input
+                    type="file"
+                    accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    className="hidden"
+                    onChange={handleDocxUpload}
+                  />
+                </label>
+                <span className="text-[10px] text-[#62686F]">Times New Roman 14 · интервалы внутри</span>
               </div>
 
               <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3">
@@ -699,7 +779,9 @@ export const ToolPage: React.FC = () => {
                             <span className="text-[#F5F7F5] font-mono">
                               {decodeResult.detectionMethod === 'text-unicode'
                                 ? 'текст · невидимые маркеры'
-                                : 'кёрнинг · letter-spacing'}
+                                : decodeResult.detectionMethod === 'docx-kerning'
+                                  ? 'кёрнинг · DOCX'
+                                  : 'кёрнинг · letter-spacing'}
                             </span>
                           </div>
                           <div>

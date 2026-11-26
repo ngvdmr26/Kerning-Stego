@@ -277,6 +277,14 @@ function extractLegacyBits(raw: string): string {
   return bits;
 }
 
+export function decodeBitStream(
+  bits: string,
+  rawLength: number,
+  method: DecodeResult['detectionMethod'] = 'kerning-html'
+): DecodeResult {
+  return decodeBits(bits, rawLength, method);
+}
+
 function decodeBits(
   bits: string,
   rawLength: number,
